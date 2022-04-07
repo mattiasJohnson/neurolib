@@ -304,7 +304,7 @@ def timeIntegration_njit_elementwise(
         m_inf_h = 1.0 / (1.0 + np.exp((V_t[0, i - 1] + 75.0) / 5.5))
         tau_m_h = 20.0 + 1000.0 / (np.exp((V_t[0, i - 1] + 71.5) / 14.2) + np.exp(-(V_t[0, i - 1] + 89.0) / 11.6))
         # Calcium channel dynamics
-        P_h = k1 * Ca ** n_P / (k1 * Ca ** n_P + k2)
+        P_h = k1 * Ca**n_P / (k1 * Ca**n_P + k2)
         d_m_h1 = (m_inf_h * (1.0 - m_h2) - m_h1) / tau_m_h - k3 * P_h * m_h1 + k4 * m_h2
         d_m_h2 = k3 * P_h * m_h1 - k4 * m_h2
         # synaptic dynamics
@@ -314,10 +314,10 @@ def timeIntegration_njit_elementwise(
         d_s_gr = ds_gr
         d_ds_et = 0.0
         # d_ds_et = gamma_e ** 2 * (N_tp * cortical_rowsum - s_et) - 2 * gamma_e * ds_et
-        d_ds_er = gamma_e ** 2 * (N_rt * _firing_rate(V_t[0, i - 1]) - s_er) - 2 * gamma_e * ds_er
+        d_ds_er = gamma_e**2 * (N_rt * _firing_rate(V_t[0, i - 1]) - s_er) - 2 * gamma_e * ds_er
         # d_ds_er = gamma_e ** 2 * (N_rt * _firing_rate(V_t[0, i - 1]) + N_rp * cortical_rowsum - s_er) - 2 * gamma_e * ds_er
-        d_ds_gt = gamma_r ** 2 * (N_tr * _firing_rate(V_r[0, i - 1]) - s_gt) - 2 * gamma_r * ds_gt
-        d_ds_gr = gamma_r ** 2 * (N_rr * _firing_rate(V_r[0, i - 1]) - s_gr) - 2 * gamma_r * ds_gr
+        d_ds_gt = gamma_r**2 * (N_tr * _firing_rate(V_r[0, i - 1]) - s_gt) - 2 * gamma_r * ds_gt
+        d_ds_gr = gamma_r**2 * (N_rr * _firing_rate(V_r[0, i - 1]) - s_gr) - 2 * gamma_r * ds_gr
 
         ### Euler integration
         V_t[0, i] = V_t[0, i - 1] + dt * d_V_t
@@ -334,7 +334,7 @@ def timeIntegration_njit_elementwise(
         s_er = s_er + dt * d_s_er
         s_gr = s_gr + dt * d_s_gr
         # noisy variable
-        ds_et = ds_et + dt * d_ds_et + gamma_e ** 2 * d_phi * sqrt_dt * noise[i]
+        ds_et = ds_et + dt * d_ds_et + gamma_e**2 * d_phi * sqrt_dt * noise[i]
         ds_gt = ds_gt + dt * d_ds_gt
         ds_er = ds_er + dt * d_ds_er
         ds_gr = ds_gr + dt * d_ds_gr

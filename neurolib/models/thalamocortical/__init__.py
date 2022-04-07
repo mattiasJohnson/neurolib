@@ -1,1 +1,1 @@
-from .model import ALNModel
+from .model import ThalamocorticalModel

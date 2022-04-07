@@ -5,13 +5,13 @@ from . import timeIntegration as ti
 from ..model import Model
 
 
-class ALNModel(Model):
+class ThalamocorticalModel(Model):
     """
-    Multi-population mean-field model with exciatory and inhibitory neurons per population.
+    Thalamocortical model with 80 cortical nodes and 2 thalamic nodes.
     """
 
-    name = "aln"
-    description = "Adaptive linear-nonlinear model of exponential integrate-and-fire neurons"
+    name = "thalamocortical"
+    description = "Thalamocortical model with 80 cortical nodes and 2 thalamic nodes."
 
     init_vars = [
         "rates_exc_init",
@@ -29,6 +29,24 @@ class ALNModel(Model):
         "siiv_init",
         "mue_ou",
         "mui_ou",
+        # init_vars for thalamus
+        "V_t_init",
+        "V_r_init",
+        "Q_t_init",
+        "Q_r_init",
+        "Ca_init",
+        "h_T_t_init",
+        "h_T_r_init",
+        "m_h1_init",
+        "m_h2_init",
+        "s_et_init",
+        "s_gt_init",
+        "s_er_init",
+        "s_gr_init",
+        "ds_et_init",
+        "ds_gt_init",
+        "ds_er_init",
+        "ds_gr_init",
     ]
 
     state_vars = [
@@ -47,8 +65,26 @@ class ALNModel(Model):
         "siiv",
         "mue_ou",
         "mui_ou",
+        # state_vars for thalamus
+        "V_t",
+        "V_r",
+        "Q_t",
+        "Q_r",
+        "Ca",
+        "h_T_t",
+        "h_T_r",
+        "m_h1",
+        "m_h2",
+        "s_et",
+        "s_gt",
+        "s_er",
+        "s_gr",
+        "ds_et",
+        "ds_gt",
+        "ds_er",
+        "ds_gr",
     ]
-    output_vars = ["rates_exc", "rates_inh", "IA"]
+    output_vars = ["rates_exc", "rates_inh", "IA"] + ["V_t", "V_r", "Q_t", "Q_r"]
     default_output = "rates_exc"
     input_vars = ["ext_exc_current", "ext_exc_rate"]
     default_input = "ext_exc_rate"

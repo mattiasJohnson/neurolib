@@ -6,7 +6,7 @@ from . import timeIntegration as ti
 class ThalamicMassModel(Model):
     """
     Two population thalamic model
-    
+
     Reference:
     Costa, M. S., Weigenand, A., Ngo, H. V. V., Marshall, L., Born, J.,
     Martinetz, T., & Claussen, J. C. (2016). A thalamocortical neural mass
