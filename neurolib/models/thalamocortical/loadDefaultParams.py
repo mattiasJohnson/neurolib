@@ -312,6 +312,9 @@ def generateRandomICs(N, seed=None):
     rates_inh_init = 0.01 * np.random.uniform(0, 1, (N, 1))
     IA_init = 200.0 * np.random.uniform(0, 1, (N, 1))  # pA
 
+    # Temporary fix for getting same random values when comparing with only thalamus model
+    np.random.seed(seed)
+
     # Thalamus
     V_t_init = np.random.uniform(-75, -50, (1,))
     V_r_init = np.random.uniform(-75, -50, (1,))
