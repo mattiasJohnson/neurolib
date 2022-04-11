@@ -43,14 +43,16 @@ def timeIntegration(params):
     c_gl = params["c_gl"]  # EPSP amplitude between areas
     Ke_gl = params["Ke_gl"]  # number of incoming E connections (to E population) from each area
 
-    N = len(Cmat)  # Number of areas
+    # N = len(Cmat)  # Number of areas
+    n_nodes_ctx = params["n_nodes_ctx"]  # Number of cortical areas
+    n_nodes_thal = params["n_nodes_thal"]  # Number of thalamic areas
 
     # Interareal connection delay
     lengthMat = params["lengthMat"]
     signalV = params["signalV"]
 
-    if N == 1:
-        Dmat = np.ones((N, N)) * params["de"]
+    if n_nodes_ctx == 1:
+        Dmat = np.ones((n_nodes_ctx, n_nodes_ctx)) * params["de"]
     else:
         Dmat = dp.computeDelayMatrix(
             lengthMat, signalV
@@ -158,8 +160,8 @@ def timeIntegration(params):
     ndt_de = np.around(de / dt).astype(int)
     ndt_di = np.around(di / dt).astype(int)
 
-    rd_exc = np.zeros((N, N))  # kHz  rd_exc(i,j): Connection from jth node to ith
-    rd_inh = np.zeros(N)
+    rd_exc = np.zeros((n_nodes_ctx, n_nodes_ctx))  # kHz  rd_exc(i,j): Connection from jth node to ith
+    rd_inh = np.zeros(n_nodes_ctx)
 
     # Already done above when Dmat_ndt is built
     # for l in range(N):
@@ -170,9 +172,9 @@ def timeIntegration(params):
 
     # state variable arrays, have length of t + startind
     # they store initial conditions AND simulated data
-    rates_exc = np.zeros((N, startind + len(t)))
-    rates_inh = np.zeros((N, startind + len(t)))
-    IA = np.zeros((N, startind + len(t)))
+    rates_exc = np.zeros((n_nodes_ctx, startind + len(t)))
+    rates_inh = np.zeros((n_nodes_ctx, startind + len(t)))
+    IA = np.zeros((n_nodes_ctx, startind + len(t)))
 
     # ------------------------------------------------------------------------
     # Set initial values
@@ -194,9 +196,9 @@ def timeIntegration(params):
     # Set the initial firing rates.
     # if initial values are just a Nx1 array
     if np.shape(params["rates_exc_init"])[1] == 1:
-        # repeat the 1-dim value stardind times
-        rates_exc_init = np.dot(params["rates_exc_init"], np.ones((1, startind)))  # kHz
-        rates_inh_init = np.dot(params["rates_inh_init"], np.ones((1, startind)))  # kHz
+        # repeat the 1-dim value startind times
+        rates_exc_init = params["rates_exc_init"] * np.ones((1, startind))  # kHz
+        rates_inh_init = params["rates_inh_init"] * np.ones((1, startind))  # kHz
         # set initial adaptation current
         IA_init = np.dot(params["IA_init"], np.ones((1, startind)))
     # if initial values are a Nxt array
@@ -208,16 +210,16 @@ def timeIntegration(params):
     np.random.seed(RNGseed)
 
     # Save the noise in the rates array to save memory
-    rates_exc[:, startind:] = np.random.standard_normal((N, len(t)))
-    rates_inh[:, startind:] = np.random.standard_normal((N, len(t)))
+    rates_exc[:, startind:] = np.random.standard_normal((n_nodes_ctx, len(t)))
+    rates_inh[:, startind:] = np.random.standard_normal((n_nodes_ctx, len(t)))
 
     # Set the initial conditions
     rates_exc[:, :startind] = rates_exc_init
     rates_inh[:, :startind] = rates_inh_init
     IA[:, :startind] = IA_init
 
-    noise_exc = np.zeros((N,))
-    noise_inh = np.zeros((N,))
+    noise_exc = np.zeros((n_nodes_ctx,))
+    noise_inh = np.zeros((n_nodes_ctx,))
 
     # tile external inputs to appropriate shape
     ext_exc_current = adjust_shape(params["ext_exc_current"], rates_exc)
@@ -281,9 +283,19 @@ def timeIntegration(params):
     V_r = np.zeros((1, startind + len(t)))
     Q_t = np.zeros((1, startind + len(t)))
     Q_r = np.zeros((1, startind + len(t)))
+    # Set initial Thalamus membrane potentials
+    # if initial values are just a Nx1 array
+    if np.shape(params["V_t_init"])[1] == 1:
+        # repeat the 1-dim value startind times
+        V_t_init = params["V_t_init"] * np.ones((1, startind))
+        V_r_init = params["V_r_init"] * np.ones((1, startind))
+    # if initial values are a Nxt array
+    else:
+        V_t_init = params["V_t_init"][:, -startind:]
+        V_r_init = params["V_r_init"][:, -startind:]
     # init
-    V_t[:, :startind] = params["V_t_init"]
-    V_r[:, :startind] = params["V_r_init"]
+    V_t[:, :startind] = V_t_init
+    V_r[:, :startind] = V_r_init
     Ca = float(params["Ca_init"])
     h_T_t = float(params["h_T_t_init"])
     h_T_r = float(params["h_T_r_init"])
@@ -363,7 +375,7 @@ def timeIntegration(params):
         ds,
         sigmarange,
         Irange,
-        N,
+        n_nodes_ctx,
         Dmat_ndt,
         t,
         rates_exc,
@@ -508,7 +520,7 @@ def timeIntegration_njit_elementwise(
     ds,
     sigmarange,
     Irange,
-    N,
+    n_nodes_ctx,
     Dmat_ndt,
     t,
     rates_exc,
@@ -605,7 +617,7 @@ def timeIntegration_njit_elementwise(
         sigmae_f = sigmae_ext
         sigmai_f = sigmai_ext
 
-    # Thalamus
+    # Thalamus functions
 
     def _firing_rate(voltage):
         return Q_max / (1.0 + np.exp(-C1 * (voltage - theta) / sigma))
@@ -628,16 +640,16 @@ def timeIntegration_njit_elementwise(
         if not distr_delay:
             # Get the input from one node into another from the rates at time t - connection_delay - 1
             # remark: assume Kie == Kee and Kei == Kii
-            for no in range(N):
+            for no in range(n_nodes_ctx):
                 # interareal coupling
-                for l in range(N):
+                for l in range(n_nodes_ctx):
                     # rd_exc(i,j) delayed input rate from population j to population i
                     rd_exc[l, no] = rates_exc[no, i - Dmat_ndt[l, no] - 1] * 1e-3  # convert Hz to kHz
                 # Warning: this is a vector and not a matrix as rd_exc
                 rd_inh[no] = rates_inh[no, i - ndt_di - 1] * 1e-3  # convert Hz to kHz
 
         # loop through all the nodes
-        for no in range(N):
+        for no in range(n_nodes_ctx):
 
             # To save memory, noise is saved in the rates array
             noise_exc[no] = rates_exc[no, i]
@@ -649,13 +661,16 @@ def timeIntegration_njit_elementwise(
             # compute row sum of Cmat*rd_exc and Cmat**2*rd_exc
             rowsum = 0
             rowsumsq = 0
-            for col in range(N):
+            for col in range(n_nodes_ctx):
                 rowsum = rowsum + Cmat[no, col] * rd_exc[no, col]
                 rowsumsq = rowsumsq + Cmat[no, col] ** 2 * rd_exc[no, col]
 
             # z1: weighted sum of delayed rates, weights=c*K
             z1ee = (
-                cee * Ke * rd_exc[no, no] + c_gl * Ke_gl * rowsum + c_gl * Ke_gl * ext_exc_rate[no, i]
+                cee * Ke * rd_exc[no, no]
+                + c_gl * Ke_gl * rowsum
+                + c_gl * Ke_gl * ext_exc_rate[no, i]  # Set to 0 in paper
+                + c_gl * Ke_gl * 0  # TODO: Connection and fire rate TCR
             )  # rate from other regions + exc_ext_rate
             z1ei = cei * Ki * rd_inh[no]
             z1ie = (
@@ -788,7 +803,9 @@ def timeIntegration_njit_elementwise(
                 mui_ou[no] + (mui_ext_mean - mui_ou[no]) * dt / tau_ou + sigma_ou * sqrt_dt * noise_inh[no]
             )  # mV/ms
 
-        # Thalamus (Once every timestep as for now)
+        # -------------------------------------------------------------
+        # Thalamus (Single node so once every timestep as for now)
+        # -------------------------------------------------------------
 
         # leak current
         I_leak_t = _leak_current(V_t[0, i - 1])

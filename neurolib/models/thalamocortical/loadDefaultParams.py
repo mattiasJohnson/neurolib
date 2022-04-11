@@ -5,7 +5,7 @@ import h5py
 from ...utils.collections import dotdict
 
 
-def loadDefaultParams(Cmat=None, Dmat=None, lookupTableFileName=None, seed=None):
+def loadDefaultParams(Cmat=None, Dmat=None, lookupTableFileName=None, seed=None, n_nodes_ctx=None, n_nodes_thal=None):
     """Load default parameters for a network of aLN nodes.
     :param Cmat: Structural connectivity matrix (adjacency matrix) of coupling strengths, will be normalized to 1. If not given, then a single node simulation will be assumed, defaults to None
     :type Cmat: numpy.ndarray, optional
@@ -46,16 +46,35 @@ def loadDefaultParams(Cmat=None, Dmat=None, lookupTableFileName=None, seed=None)
     # global whole-brain network parameters
     # ------------------------------------------------------------------------
 
+    # TODO: assumes no parameter or all parameters given (in line with their use before tho so maybe okay)
+
     if Cmat is None:
-        params.N = 1
+        # params.N = 1
         params.Cmat = np.zeros((1, 1))
         params.lengthMat = np.zeros((1, 1))
 
     else:
         params.Cmat = Cmat.copy()  # coupling matrix
         np.fill_diagonal(params.Cmat, 0)  # no self connections
-        params.N = len(params.Cmat)  # number of nodes
+        # params.N = len(params.Cmat)  # number of nodes
         params.lengthMat = Dmat  # delay matrix
+
+    # Number of cortical and thalamic nodes
+    if n_nodes_ctx is None:
+        n_nodes_ctx = 1
+
+    if n_nodes_thal is None:
+        n_nodes_thal = 1
+
+    params.n_nodes_ctx = n_nodes_ctx
+    params.n_nodes_thal = n_nodes_thal
+
+    # TODO: assumes ordering ctx and then thal, okay? also inclusive or not?
+    # Indices for cortical and thalamic nodes (not inclusive)
+    # params.idx_start_ctx = 0
+    # params.idx_end_ctx = n_nodes_ctx
+    # params.idx_start_thal = n_nodes_ctx
+    # params.idx_end_thal = n_nodes_ctx + n_nodes_thal
 
     # Signal transmission speed in mm/ms
     params.signalV = 20.0
@@ -78,8 +97,8 @@ def loadDefaultParams(Cmat=None, Dmat=None, lookupTableFileName=None, seed=None)
 
     # Ornstein-Uhlenbeck noise state variables, set to mean input
     # mue_ou will fluctuate around mue_ext_mean (mean of the OU process)
-    params.mue_ou = params.mue_ext_mean * np.ones((params.N,))  # np.zeros((params.N,))
-    params.mui_ou = params.mui_ext_mean * np.ones((params.N,))  # np.zeros((params.N,))
+    params.mue_ou = params.mue_ext_mean * np.ones((params.n_nodes_ctx,))  # np.zeros((params.N,))
+    params.mui_ou = params.mui_ext_mean * np.ones((params.n_nodes_ctx,))  # np.zeros((params.N,))
 
     # external neuronal firing rate input
     params.ext_exc_rate = 0.0  # kHz external excitatory rate drive
@@ -172,7 +191,7 @@ def loadDefaultParams(Cmat=None, Dmat=None, lookupTableFileName=None, seed=None)
         params.ds_gt_init,
         params.ds_er_init,
         params.ds_gr_init,
-    ) = generateRandomICs(params.N, seed)
+    ) = generateRandomICs(params.n_nodes_ctx, seed)
 
     params.mufe_init = mufe_init  # (linear) filtered mean input
     params.mufi_init = mufi_init  #
@@ -284,7 +303,7 @@ def computeDelayMatrix(lengthMat, signalV, segmentLength=1):
     return Dmat
 
 
-def generateRandomICs(N, seed=None):
+def generateRandomICs(n_nodes_ctx, seed=None):
     """Generates random Initial Conditions for the interareal network
 
     :params N:  Number of area in the large scale network
@@ -298,26 +317,26 @@ def generateRandomICs(N, seed=None):
     np.random.seed(seed)
 
     # Cortex
-    mufe_init = 3 * np.random.uniform(0, 1, (N,))  # mV/ms
-    mufi_init = 3 * np.random.uniform(0, 1, (N,))  # mV/ms
-    seem_init = 0.5 * np.random.uniform(0, 1, (N,))
-    seim_init = 0.5 * np.random.uniform(0, 1, (N,))
-    seev_init = 0.001 * np.random.uniform(0, 1, (N,))
-    seiv_init = 0.001 * np.random.uniform(0, 1, (N,))
-    siim_init = 0.5 * np.random.uniform(0, 1, (N,))
-    siem_init = 0.5 * np.random.uniform(0, 1, (N,))
-    siiv_init = 0.01 * np.random.uniform(0, 1, (N,))
-    siev_init = 0.01 * np.random.uniform(0, 1, (N,))
-    rates_exc_init = 0.01 * np.random.uniform(0, 1, (N, 1))
-    rates_inh_init = 0.01 * np.random.uniform(0, 1, (N, 1))
-    IA_init = 200.0 * np.random.uniform(0, 1, (N, 1))  # pA
+    mufe_init = 3 * np.random.uniform(0, 1, (n_nodes_ctx,))  # mV/ms
+    mufi_init = 3 * np.random.uniform(0, 1, (n_nodes_ctx,))  # mV/ms
+    seem_init = 0.5 * np.random.uniform(0, 1, (n_nodes_ctx,))
+    seim_init = 0.5 * np.random.uniform(0, 1, (n_nodes_ctx,))
+    seev_init = 0.001 * np.random.uniform(0, 1, (n_nodes_ctx,))
+    seiv_init = 0.001 * np.random.uniform(0, 1, (n_nodes_ctx,))
+    siim_init = 0.5 * np.random.uniform(0, 1, (n_nodes_ctx,))
+    siem_init = 0.5 * np.random.uniform(0, 1, (n_nodes_ctx,))
+    siiv_init = 0.01 * np.random.uniform(0, 1, (n_nodes_ctx,))
+    siev_init = 0.01 * np.random.uniform(0, 1, (n_nodes_ctx,))
+    rates_exc_init = 0.01 * np.random.uniform(0, 1, (n_nodes_ctx, 1))
+    rates_inh_init = 0.01 * np.random.uniform(0, 1, (n_nodes_ctx, 1))
+    IA_init = 200.0 * np.random.uniform(0, 1, (n_nodes_ctx, 1))  # pA
 
     # Temporary fix for getting same random values when comparing with only thalamus model
     np.random.seed(seed)
 
     # Thalamus
-    V_t_init = np.random.uniform(-75, -50, (1,))
-    V_r_init = np.random.uniform(-75, -50, (1,))
+    V_t_init = np.random.uniform(-75, -50, (1, 1))
+    V_r_init = np.random.uniform(-75, -50, (1, 1))
     Q_t_init = np.random.uniform(0.0, 200.0, (1,))
     Q_r_init = np.random.uniform(0.0, 200.0, (1,))
     Ca_init = 2.4e-4
