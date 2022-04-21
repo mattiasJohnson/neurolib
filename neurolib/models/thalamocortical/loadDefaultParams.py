@@ -50,9 +50,11 @@ def loadDefaultParams(Cmat=None, Dmat=None, lookupTableFileName=None, seed=None,
 
     if Cmat is None:
         # params.N = 1
-        params.Cmat = np.zeros((1, 1))
-        params.lengthMat = np.zeros((1, 1))
-
+        params.Cmat = np.zeros((2, 2))
+        lengthMat = np.zeros((2, 2))
+        lengthMat[0, 1] = 13 * 20  # corresponds to 13 ms delay
+        lengthMat[1, 0] = 13 * 20  # corresponds to 13 ms delay
+        params.lengthMat = lengthMat
     else:
         params.Cmat = Cmat.copy()  # coupling matrix
         np.fill_diagonal(params.Cmat, 0)  # no self connections
@@ -68,13 +70,7 @@ def loadDefaultParams(Cmat=None, Dmat=None, lookupTableFileName=None, seed=None,
 
     params.n_nodes_ctx = n_nodes_ctx
     params.n_nodes_thal = n_nodes_thal
-
-    # TODO: assumes ordering ctx and then thal, okay? also inclusive or not?
-    # Indices for cortical and thalamic nodes (not inclusive)
-    # params.idx_start_ctx = 0
-    # params.idx_end_ctx = n_nodes_ctx
-    # params.idx_start_thal = n_nodes_ctx
-    # params.idx_end_thal = n_nodes_ctx + n_nodes_thal
+    params.n_nodes_tot = params.n_nodes_ctx + params.n_nodes_thal
 
     # Signal transmission speed in mm/ms
     params.signalV = 20.0
@@ -337,8 +333,8 @@ def generateRandomICs(n_nodes_ctx, seed=None):
     # Thalamus
     V_t_init = np.random.uniform(-75, -50, (1, 1))
     V_r_init = np.random.uniform(-75, -50, (1, 1))
-    Q_t_init = np.random.uniform(0.0, 200.0, (1,))
-    Q_r_init = np.random.uniform(0.0, 200.0, (1,))
+    Q_t_init = np.random.uniform(0.0, 200.0, (1, 1))
+    Q_r_init = np.random.uniform(0.0, 200.0, (1, 1))
     Ca_init = 2.4e-4
     h_T_t_init = 0.0
     h_T_r_init = 0.0

@@ -13,7 +13,7 @@ def timeIntegration(params):
 
     dt = params["dt"]  # Time step for the Euler intergration (ms)
     sqrt_dt = np.sqrt(dt)
-    duration = params["duration"]  # imulation duration (ms)
+    duration = params["duration"]  # Simulation duration (ms)
     RNGseed = params["seed"]  # seed for RNG
 
     startind = 1  # int(max_global_delay + 1)
