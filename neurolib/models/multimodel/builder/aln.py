@@ -377,18 +377,18 @@ class ALNMass(NeuralMass):
         """
         return se.sqrt(
             2
-            * J_exc_max ** 2
+            * J_exc_max**2
             * I_syn_sigma_exc
             * self.params["tau_se"]
             * (self.params["C"] / self.params["gL"])
             / ((1.0 + exc_inp) * (self.params["C"] / self.params["gL"]) + self.params["tau_se"])
             + 2
-            * J_inh_max ** 2
+            * J_inh_max**2
             * I_syn_sigma_inh
             * self.params["tau_si"]
             * (self.params["C"] / self.params["gL"])
             / ((1.0 + inh_inp) * (self.params["C"] / self.params["gL"]) + self.params["tau_si"])
-            + ext_sigma ** 2
+            + ext_sigma**2
         )
 
     def _get_synaptic_current_mu(self, I_syn_mu, inp, tau):
@@ -398,7 +398,7 @@ class ALNMass(NeuralMass):
         return ((1.0 - I_syn_mu) * inp - I_syn_mu) / tau
 
     def _get_synaptic_current_sigma(self, I_syn_mu, I_syn_sigma, inp, inp_sq, tau):
-        return ((1.0 - I_syn_mu) ** 2 * inp_sq + (inp_sq - 2.0 * tau * (inp + 1.0)) * I_syn_sigma) / (tau ** 2)
+        return ((1.0 - I_syn_mu) ** 2 * inp_sq + (inp_sq - 2.0 * tau * (inp + 1.0)) * I_syn_sigma) / (tau**2)
 
 
 class ExcitatoryALNMass(ALNMass):
@@ -830,7 +830,7 @@ class ALNNode(SingleCouplingExcitatoryInhibitoryNode):
         Apart from basic EXC<->INH connectivity, construct also squared
         variants.
         """
-        connectivity_sq = self.connectivity ** 2 * self.inputs
+        connectivity_sq = self.connectivity**2 * self.inputs
         sq_connectivity = [
             (
                 # exc -> exc squared connectivity

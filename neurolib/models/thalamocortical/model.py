@@ -89,7 +89,16 @@ class ThalamocorticalModel(Model):
     input_vars = ["ext_exc_current", "ext_exc_rate"]
     default_input = "ext_exc_rate"
 
-    def __init__(self, params=None, Cmat=None, Dmat=None, lookupTableFileName=None, seed=None):
+    def __init__(
+        self,
+        params=None,
+        Cmat=None,
+        Dmat=None,
+        lookupTableFileName=None,
+        seed=None,
+        n_nodes_ctx=None,
+        n_nodes_thal=None,
+    ):
         """
         :param params: parameter dictionary of the model
         :param Cmat: Global connectivity matrix (connects E to E)
@@ -110,7 +119,12 @@ class ThalamocorticalModel(Model):
         # load default parameters if none were given
         if params is None:
             params = dp.loadDefaultParams(
-                Cmat=self.Cmat, Dmat=self.Dmat, lookupTableFileName=self.lookupTableFileName, seed=self.seed
+                Cmat=self.Cmat,
+                Dmat=self.Dmat,
+                lookupTableFileName=self.lookupTableFileName,
+                seed=self.seed,
+                n_nodes_ctx=n_nodes_ctx,
+                n_nodes_thal=n_nodes_thal,
             )
 
         # Initialize base class Model

@@ -58,6 +58,7 @@ def timeIntegration(params):
     )  # Interareal connection delays, Dmat(i,j) Connnection from jth node to ith (ms)
     np.fill_diagonal(Dmat[:n_nodes_ctx, :n_nodes_ctx], params["de"])
 
+    print("Delay matrix:-")
     print(Dmat)
 
     Dmat_ndt = np.around(Dmat / dt).astype(int)  # delay matrix in multiples of dt
@@ -676,7 +677,7 @@ def timeIntegration_njit_elementwise(
                 for idx_thal in range(n_nodes_thal):
                     from_node = idx_thal + n_nodes_ctx
                     rd_exc[to_node, from_node] = (
-                        Q_r[idx_thal, i - Dmat_ndt[to_node, from_node] - 1] * 1e-3
+                        Q_t[idx_thal, i - Dmat_ndt[to_node, from_node] - 1] * 1e-3
                     )  # convert Hz to kHz
 
             # Cortical inhibitory delayed input
