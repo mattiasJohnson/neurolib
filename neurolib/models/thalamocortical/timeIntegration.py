@@ -32,6 +32,7 @@ def timeIntegration(params):
     dt = params["dt"]  # Time step for the Euler intergration (ms)
     duration = params["duration"]  # Simulation duration (ms)
     RNGseed = params["seed"]  # seed for RNG
+    noise = params["noise"]
     # set to 0 for faster computation
 
     # ------------------------------------------------------------------------
@@ -56,11 +57,7 @@ def timeIntegration(params):
     Dmat = dp.computeDelayMatrix(
         lengthMat, signalV
     )  # Interareal connection delays, Dmat(i,j) Connnection from jth node to ith (ms)
-    np.fill_diagonal(Dmat[:n_nodes_ctx, :n_nodes_ctx], params["de"])
-
-    print("Delay matrix:-")
-    print(Dmat)
-
+    np.fill_diagonal(Dmat[:n_nodes_ctx, :n_nodes_ctx], params["de"])  # Cortex self-delays == de
     Dmat_ndt = np.around(Dmat / dt).astype(int)  # delay matrix in multiples of dt
 
     # ------------------------------------------------------------------------
@@ -212,14 +209,21 @@ def timeIntegration(params):
     np.random.seed(RNGseed)
 
     # Save the noise in the rates array to save memory
-    rates_exc[:, startind:] = np.random.standard_normal((n_nodes_ctx, len(t)))
-    rates_inh[:, startind:] = np.random.standard_normal((n_nodes_ctx, len(t)))
+    if noise:
+        rates_exc[:, startind:] = np.random.standard_normal((n_nodes_ctx, len(t)))
+        rates_inh[:, startind:] = np.random.standard_normal((n_nodes_ctx, len(t)))
+    else:
+        rates_exc[:, startind:] = np.zeros((n_nodes_ctx, len(t)))
+        rates_inh[:, startind:] = np.zeros((n_nodes_ctx, len(t)))
 
     # Set the initial conditions
     rates_exc[:, :startind] = rates_exc_init
     rates_inh[:, :startind] = rates_inh_init
     IA[:, :startind] = IA_init
 
+    # TODO: why not just have a single variable instead of array if all the noise is saved in rates_exc anyway?
+    # Guess: maybe it won't make a difference for performance (in which case the local variable should be easier)
+    # Or in optimisation maybe having n_nodes_ctx local variables in each loop performancewise is the same as an array
     noise_exc = np.zeros((n_nodes_ctx,))
     noise_inh = np.zeros((n_nodes_ctx,))
 
@@ -304,6 +308,7 @@ def timeIntegration(params):
     V_r[:, :startind] = V_r_init
     Q_t[:, :startind] = Q_t_init
     Q_r[:, :startind] = Q_r_init
+    # TODO: why convert first to array in loadDefault and now to float?
     Ca = float(params["Ca_init"])
     h_T_t = float(params["h_T_t_init"])
     h_T_r = float(params["h_T_r_init"])
@@ -318,7 +323,7 @@ def timeIntegration(params):
     ds_er = float(params["ds_er_init"])
     ds_gr = float(params["ds_gr_init"])
 
-    noise = np.random.standard_normal((len(t)))
+    noise_thalamus = np.random.standard_normal((len(t)))
 
     return timeIntegration_njit_elementwise(
         dt,
@@ -438,7 +443,7 @@ def timeIntegration(params):
         gamma_e,
         gamma_r,
         d_phi,
-        noise,
+        noise_thalamus,
         ext_current_t,
         ext_current_r,
         N_rt,
@@ -584,7 +589,7 @@ def timeIntegration_njit_elementwise(
     gamma_e,
     gamma_r,
     d_phi,
-    noise,
+    noise_thalamus,
     ext_current_t,
     ext_current_r,
     N_rt,
@@ -704,11 +709,11 @@ def timeIntegration_njit_elementwise(
 
             # z1: weighted sum of delayed rates, weights=c*K
             z1ee = (
-                cee * Ke * rd_exc[no, no]  # Self-connection
+                cee * Ke * rd_exc[no, no]  # Self-connection (kHz)
                 + c_gl * Ke_gl * rowsum  # Thalamus enters
                 + c_gl * Ke_gl * ext_exc_rate[no, i]  # Set to 0 in paper
             )  # rate from other regions + exc_ext_rate
-            z1ei = cei * Ki * rd_inh[no]
+            z1ei = cei * Ki * rd_inh[no]  # kHz
             z1ie = (
                 cie * Ke * rd_exc[no, no] + c_gl * Ke_gl * ext_inh_rate[no, i]
             )  # first test of external rate input to inh. population
@@ -926,7 +931,7 @@ def timeIntegration_njit_elementwise(
             s_er = s_er + dt * d_s_er
             s_gr = s_gr + dt * d_s_gr
             # noisy variable
-            ds_et = ds_et + dt * d_ds_et + gamma_e**2 * d_phi * sqrt_dt * noise[i]
+            ds_et = ds_et + dt * d_ds_et + gamma_e**2 * d_phi * sqrt_dt * noise_thalamus[i]
             ds_gt = ds_gt + dt * d_ds_gt
             ds_er = ds_er + dt * d_ds_er
             ds_gr = ds_gr + dt * d_ds_gr

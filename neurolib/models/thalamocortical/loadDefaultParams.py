@@ -34,6 +34,7 @@ def loadDefaultParams(Cmat=None, Dmat=None, lookupTableFileName=None, seed=None,
     params.duration = 2000  # Simulation duration (ms)
     np.random.seed(seed)  # seed for RNG of noise and ICs
     params.seed = seed
+    params.noise = True
 
     # options
     params.warn = 0  # warn if limits of lookup tables are exceeded
@@ -368,6 +369,7 @@ def generateRandomICs(n_nodes_ctx, seed=None):
         V_r_init,
         Q_t_init,
         Q_r_init,
+        # TODO: clean this up or why was it there?
         np.array(Ca_init),
         np.array(h_T_t_init),
         np.array(h_T_r_init),
