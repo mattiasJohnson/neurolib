@@ -155,6 +155,7 @@ def loadDefaultParams(Cmat=None, Dmat=None, lookupTableFileName=None, seed=None,
 
     # ------------------------------------------------------------------------
 
+    # TODO: set all values directly with params.mufe_init
     # Generate and set random initial conditions
     (
         mufe_init,
