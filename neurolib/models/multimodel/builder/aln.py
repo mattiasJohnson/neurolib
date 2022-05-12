@@ -7,7 +7,7 @@ import symengine as se
 from h5py import File
 from jitcdde import input as system_input
 
-from ....utils.stimulus import OrnsteinUhlenbeckProcess, ZeroInput
+from ....utils.stimulus import OrnsteinUhlenbeckProcess
 from ..builder.base.constants import EXC, INH, LAMBDA_SPEED
 from ..builder.base.network import Network, SingleCouplingExcitatoryInhibitoryNode
 from ..builder.base.neural_mass import NeuralMass
@@ -449,7 +449,6 @@ class ExcitatoryALNMass(ALNMass):
     ]
 
     _noise_input = [OrnsteinUhlenbeckProcess(mu=0.4, sigma=0.0, tau=5.0)]
-    # _noise_input = [ZeroInput()]
 
     def __init__(self, params=None, lin_nonlin_transfer_function_filename=None, seed=None):
         super().__init__(
@@ -464,10 +463,9 @@ class ExcitatoryALNMass(ALNMass):
         """
         np.random.seed(self.seed)
         self.initial_state = (
-            np.random.uniform(0, 1, self.num_state_variables)
-            * np.array([3.0, 200.0, 0.5, 0.5, 0.001, 0.001, 0.01])
-            # np.array([3.0, 200.0, 0.5, 0.5, 0.001, 0.001, 0.01])
-            # * 0.5
+            # np.random.uniform(0, 1, self.num_state_variables) * np.array([3.0, 200.0, 0.5, 0.5, 0.001, 0.001, 0.01])
+            np.array([3.0, 200.0, 0.5, 0.5, 0.001, 0.001, 0.01])
+            * 0.5
         ).tolist()
 
     def _get_adaptation_current(self, I_adaptation, firing_rate, voltage):
@@ -615,7 +613,6 @@ class InhibitoryALNMass(ALNMass):
     ]
 
     _noise_input = [OrnsteinUhlenbeckProcess(mu=0.3, sigma=0.0, tau=5.0)]
-    # _noise_input = [ZeroInput()]
 
     def __init__(self, params=None, lin_nonlin_transfer_function_filename=None, seed=None):
         super().__init__(
@@ -630,10 +627,9 @@ class InhibitoryALNMass(ALNMass):
         """
         np.random.seed(self.seed)
         self.initial_state = (
-            np.random.uniform(0, 1, self.num_state_variables)
-            * np.array([3.0, 0.5, 0.5, 0.01, 0.01, 0.01])
-            # np.array([3.0, 0.5, 0.5, 0.01, 0.01, 0.01])
-            # * 0.5
+            # np.random.uniform(0, 1, self.num_state_variables) * np.array([3.0, 0.5, 0.5, 0.01, 0.01, 0.01])
+            np.array([3.0, 0.5, 0.5, 0.01, 0.01, 0.01])
+            * 0.5
         ).tolist()
 
     def _compute_couplings(self, coupling_variables):
