@@ -324,7 +324,7 @@ def timeIntegration(params):
     ds_er = float(params["ds_er_init"])
     ds_gr = float(params["ds_gr_init"])
 
-    noise_thalamus = np.random.standard_normal((len(t)))
+    noise_thalamus = np.random.standard_normal(startind + len(t))
 
     return timeIntegration_njit_elementwise(
         dt,

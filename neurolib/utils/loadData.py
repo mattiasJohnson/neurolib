@@ -341,7 +341,8 @@ def filterSubcortical(a, axis="both"):
     # with cerebellum indices
     # subcortical_index = np.array(list(range(40, 46)) + list(range(74, 82)) + list(range(94, 120)))
     # without cerebellum
-    subcortical_index = np.array(list(range(40, 46)) + list(range(74, 82)))
+    # subcortical_index = np.array(list(range(40, 46)) + list(range(74, 82)))
+    subcortical_index = np.array(list(range(40, 46)) + list(range(74, 80)))
 
     if axis == "both":
         a = np.delete(a, subcortical_index, axis=0)

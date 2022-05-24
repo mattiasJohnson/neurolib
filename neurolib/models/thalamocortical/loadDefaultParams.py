@@ -31,7 +31,7 @@ def loadDefaultParams(Cmat=None, Dmat=None, lookupTableFileName=None, seed=None,
     # runtime parameters
     # thalamus is really sensitive, so either you integrate with very small dt or use an adaptive integration step
     params.dt = 0.01  # ms
-    params.duration = 2000  # Simulation duration (ms)
+    params.duration = 10000  # Simulation duration (ms)
     np.random.seed(seed)  # seed for RNG of noise and ICs
     params.seed = seed
     params.noise = True
@@ -51,7 +51,7 @@ def loadDefaultParams(Cmat=None, Dmat=None, lookupTableFileName=None, seed=None,
 
     if Cmat is None:
         # params.N = 1
-        params.Cmat = np.zeros((2, 2))
+        params.Cmat = np.array([[0, 0.12], [1.2, 0]])
         lengthMat = np.zeros((2, 2))
         lengthMat[0, 1] = 13 * 20  # corresponds to 13 ms delay
         lengthMat[1, 0] = 13 * 20  # corresponds to 13 ms delay
@@ -78,7 +78,7 @@ def loadDefaultParams(Cmat=None, Dmat=None, lookupTableFileName=None, seed=None,
 
     # PSP current amplitude in (mV/ms) (or nA/[C]) for global coupling
     # connections between areas
-    params.c_gl = 0.3
+    params.c_gl = 0.4
     # number of incoming E connections (to E population) from each area
     params.Ke_gl = 250.0
 
@@ -88,9 +88,9 @@ def loadDefaultParams(Cmat=None, Dmat=None, lookupTableFileName=None, seed=None,
 
     # external input parameters:
     params.tau_ou = 5.0  # ms timescale of ornstein-uhlenbeck (OU) noise
-    params.sigma_ou = 0.0  # mV/ms/sqrt(ms) intensity of OU oise
-    params.mue_ext_mean = 0.4  # mV/ms mean external input current to E
-    params.mui_ext_mean = 0.3  # mV/ms mean external input current to I
+    params.sigma_ou = 0.05  # mV/ms/sqrt(ms) intensity of OU oise
+    params.mue_ext_mean = 3.05  # mV/ms mean external input current to E
+    params.mui_ext_mean = 2  # mV/ms mean external input current to I
 
     # Ornstein-Uhlenbeck noise state variables, set to mean input
     # mue_ou will fluctuate around mue_ext_mean (mean of the OU process)
@@ -126,10 +126,10 @@ def loadDefaultParams(Cmat=None, Dmat=None, lookupTableFileName=None, seed=None,
     params.tau_di = 1.0  # ms  "EI = II"
 
     # PSC amplitudes
-    params.cee = 0.3  # mV/ms
-    params.cie = 0.3  # AMPA
-    params.cei = 0.5  # GABA BrunelWang2003
-    params.cii = 0.5
+    params.cee = 0.24691358  # mV/ms
+    params.cie = 0.23076923  # AMPA
+    params.cei = 0.75757576  # GABA BrunelWang2003
+    params.cii = 1.52439024
 
     # Coupling strengths used in Cakan2020
     params.Jee_max = 2.43  # mV/ms
@@ -139,9 +139,9 @@ def loadDefaultParams(Cmat=None, Dmat=None, lookupTableFileName=None, seed=None,
 
     # neuron model parameters
     params.a = 0.0  # nS, can be 15.0
-    params.b = 0.0  # pA, can be 40.0
+    params.b = 15  # pA, can be 40.0
     params.EA = -80.0  # mV
-    params.tauA = 200.0  # ms
+    params.tauA = 1000.0  # ms
 
     # single neuron paramters - if these are changed, new transfer functions must be precomputed!
     params.C = 200.0  # pF
@@ -189,7 +189,7 @@ def loadDefaultParams(Cmat=None, Dmat=None, lookupTableFileName=None, seed=None,
         params.ds_gt_init,
         params.ds_er_init,
         params.ds_gr_init,
-    ) = generateRandomICs(params.n_nodes_ctx, seed)
+    ) = generateRandomICs(params.n_nodes_ctx, params.n_nodes_thal, seed)
 
     params.mufe_init = mufe_init  # (linear) filtered mean input
     params.mufi_init = mufi_init  #
@@ -222,7 +222,7 @@ def loadDefaultParams(Cmat=None, Dmat=None, lookupTableFileName=None, seed=None,
 
     # ------------------------------------------------------------------------
     # Default thalamus parameters
-    # ------------------------------------------------------------------------
+    # --------------------------------------1----------------------------------
 
     # local parameters for both populations
     params.tau = 20.0
@@ -236,7 +236,7 @@ def loadDefaultParams(Cmat=None, Dmat=None, lookupTableFileName=None, seed=None,
     params.g_L = 1.0  # AU
     params.g_GABA = 1.0  # ms
     params.g_AMPA = 1.0  # ms
-    params.g_LK = 0.018  # mS/cm^2
+    # params.g_LK = 0.018  # mS/cm^2
     params.E_AMPA = 0.0  # mV
     params.E_GABA = -70.0  # mV
     params.E_L = -70.0  # mV
@@ -245,6 +245,7 @@ def loadDefaultParams(Cmat=None, Dmat=None, lookupTableFileName=None, seed=None,
 
     # specific thalamo-cortical neurons population - TCR (excitatory)
     params.g_T_t = 3.0  # mS/cm^2
+    params.g_LK_t = 0.032  # mS/cm^2
     params.g_h = 0.062  # mS/cm^2
     params.E_h = -40.0  # mV
     params.alpha_Ca = -51.8e-6  # nmol
@@ -263,6 +264,7 @@ def loadDefaultParams(Cmat=None, Dmat=None, lookupTableFileName=None, seed=None,
 
     # specific thalamic reticular nuclei population - TRN (inhibitory)
     params.g_T_r = 2.3  # mS/cm^2
+    params.g_LK_r = 0.032  # mS/cm^2
     # connectivity
     params.N_rt = 3.0
     params.N_rr = 25.0
@@ -301,7 +303,7 @@ def computeDelayMatrix(lengthMat, signalV, segmentLength=1):
     return Dmat
 
 
-def generateRandomICs(n_nodes_ctx, seed=None):
+def generateRandomICs(n_nodes_ctx, n_nodes_thal, seed=None):
     """Generates random Initial Conditions for the interareal network
 
     :params N:  Number of area in the large scale network
@@ -333,23 +335,23 @@ def generateRandomICs(n_nodes_ctx, seed=None):
     np.random.seed(seed)
 
     # Thalamus
-    V_t_init = np.random.uniform(-75, -50, (1, 1))
-    V_r_init = np.random.uniform(-75, -50, (1, 1))
-    Q_t_init = np.random.uniform(0.0, 200.0, (1, 1))
-    Q_r_init = np.random.uniform(0.0, 200.0, (1, 1))
-    Ca_init = 2.4e-4
-    h_T_t_init = 0.0
-    h_T_r_init = 0.0
-    m_h1_init = 0.0
-    m_h2_init = 0.0
-    s_et_init = 0.0
-    s_gt_init = 0.0
-    s_er_init = 0.0
-    s_gr_init = 0.0
-    ds_et_init = 0.0
-    ds_gt_init = 0.0
-    ds_er_init = 0.0
-    ds_gr_init = 0.0
+    V_t_init = np.random.uniform(-75, -50, (n_nodes_thal, 1))
+    V_r_init = np.random.uniform(-75, -50, (n_nodes_thal, 1))
+    Q_t_init = np.random.uniform(0.0, 200.0, (n_nodes_thal, 1))
+    Q_r_init = np.random.uniform(0.0, 200.0, (n_nodes_thal, 1))
+    Ca_init = np.array(2.4e-4)
+    h_T_t_init = np.array(0.0)
+    h_T_r_init = np.array(0.0)
+    m_h1_init = np.array(0.0)
+    m_h2_init = np.array(0.0)
+    s_et_init = np.array(0.0)
+    s_gt_init = np.array(0.0)
+    s_er_init = np.array(0.0)
+    s_gr_init = np.array(0.0)
+    ds_et_init = np.array(0.0)
+    ds_gt_init = np.array(0.0)
+    ds_er_init = np.array(0.0)
+    ds_gr_init = np.array(0.0)
 
     return (
         mufe_init,
@@ -371,17 +373,17 @@ def generateRandomICs(n_nodes_ctx, seed=None):
         Q_t_init,
         Q_r_init,
         # TODO: clean this up or why was it there?
-        np.array(Ca_init),
-        np.array(h_T_t_init),
-        np.array(h_T_r_init),
-        np.array(m_h1_init),
-        np.array(m_h2_init),
-        np.array(s_et_init),
-        np.array(s_gt_init),
-        np.array(s_er_init),
-        np.array(s_gr_init),
-        np.array(ds_et_init),
-        np.array(ds_gt_init),
-        np.array(ds_er_init),
-        np.array(ds_gr_init),
+        Ca_init,
+        h_T_t_init,
+        h_T_r_init,
+        m_h1_init,
+        m_h2_init,
+        s_et_init,
+        s_gt_init,
+        s_er_init,
+        s_gr_init,
+        ds_et_init,
+        ds_gt_init,
+        ds_er_init,
+        ds_gr_init,
     )
