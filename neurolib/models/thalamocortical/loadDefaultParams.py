@@ -222,7 +222,7 @@ def loadDefaultParams(Cmat=None, Dmat=None, lookupTableFileName=None, seed=None,
 
     # ------------------------------------------------------------------------
     # Default thalamus parameters
-    # --------------------------------------1----------------------------------
+    # ------------------------------------------------------------------------
 
     # local parameters for both populations
     params.tau = 20.0

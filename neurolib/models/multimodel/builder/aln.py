@@ -463,9 +463,10 @@ class ExcitatoryALNMass(ALNMass):
         """
         np.random.seed(self.seed)
         self.initial_state = (
-            np.random.uniform(0, 1, self.num_state_variables)
-            * np.array([3.0, 200.0, 0.5, 0.5, 0.001, 0.001, 0.01])
-            # np.array([3.0, 200.0, 0.5, 0.5, 0.001, 0.001, 0.01]) * 0.5
+            # np.random.uniform(0, 1, self.num_state_variables)
+            # * np.array([3.0, 200.0, 0.5, 0.5, 0.001, 0.001, 0.01])
+            np.array([3.0, 200.0, 0.5, 0.5, 0.001, 0.001, 0.01])
+            * 0.5
         ).tolist()
 
     def _get_adaptation_current(self, I_adaptation, firing_rate, voltage):
@@ -627,9 +628,10 @@ class InhibitoryALNMass(ALNMass):
         """
         np.random.seed(self.seed)
         self.initial_state = (
-            np.random.uniform(0, 1, self.num_state_variables)
-            * np.array([3.0, 0.5, 0.5, 0.01, 0.01, 0.01])
-            # np.array([3.0, 0.5, 0.5, 0.01, 0.01, 0.01]) * 0.5
+            # np.random.uniform(0, 1, self.num_state_variables)
+            # * np.array([3.0, 0.5, 0.5, 0.01, 0.01, 0.01])
+            np.array([3.0, 0.5, 0.5, 0.01, 0.01, 0.01])
+            * 0.5
         ).tolist()
 
     def _compute_couplings(self, coupling_variables):
