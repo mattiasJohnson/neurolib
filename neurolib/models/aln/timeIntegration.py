@@ -434,10 +434,8 @@ def timeIntegration_njit_elementwise(
             noise_exc[no] = rates_exc[no, i]
             noise_inh[no] = rates_inh[no, i]
 
-            # mue = Jee_max * seem[no] + Jei_max * seim[no] + mue_ou[no] + ext_exc_current[no, i]
-            # mui = Jie_max * siem[no] + Jii_max * siim[no] + mui_ou[no] + ext_inh_current[no, i]
-            mue = Jee_max * seem[no] + Jei_max * seim[no] + ext_exc_current[no, i]
-            mui = Jie_max * siem[no] + Jii_max * siim[no] + ext_inh_current[no, i]
+            mue = Jee_max * seem[no] + Jei_max * seim[no] + mue_ou[no] + ext_exc_current[no, i]
+            mui = Jie_max * siem[no] + Jii_max * siim[no] + mui_ou[no] + ext_inh_current[no, i]
 
             # compute row sum of Cmat*rd_exc and Cmat**2*rd_exc
             rowsum = 0
