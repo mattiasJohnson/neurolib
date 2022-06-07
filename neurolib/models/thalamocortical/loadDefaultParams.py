@@ -2,7 +2,7 @@ import os
 import numpy as np
 import h5py
 
-from ...utils.collections import dotdict
+from ...utils.collections import star_dotdict
 
 
 def loadDefaultParams(Cmat=None, Dmat=None, lookupTableFileName=None, seed=None, n_nodes_ctx=None, n_nodes_thal=None):
@@ -20,7 +20,7 @@ def loadDefaultParams(Cmat=None, Dmat=None, lookupTableFileName=None, seed=None,
     :rtype: dict
     """
 
-    params = dotdict({})
+    params = star_dotdict({})
 
     # Todo: Model metadata
     # recently added for easier simulation of aln and brian in pypet

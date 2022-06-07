@@ -4,7 +4,7 @@ import numpy as np
 
 from ..models import bold
 
-from ..utils.collections import dotdict
+from ..utils.collections import star_dotdict as dotdict
 
 
 class Model:
