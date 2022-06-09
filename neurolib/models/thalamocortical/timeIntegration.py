@@ -473,7 +473,7 @@ def timeIntegration(params):
     )
 
 
-@numba.njit(locals={"idxX": numba.int64, "idxY": numba.int64, "idx1": numba.int64, "idy1": numba.int64})
+# @numba.njit(locals={"idxX": numba.int64, "idxY": numba.int64, "idx1": numba.int64, "idy1": numba.int64})
 def timeIntegration_njit_elementwise(
     dt,
     duration,
@@ -914,7 +914,7 @@ def timeIntegration_njit_elementwise(
 
             cortical_rowsum = 0
             for col in range(n_nodes_tot):
-                cortical_rowsum += cortical_rowsum + Cmat[no + n_nodes_ctx, col] * rd_exc[no + n_nodes_ctx, col]
+                cortical_rowsum = cortical_rowsum + Cmat[no + n_nodes_ctx, col] * rd_exc[no + n_nodes_ctx, col]
 
             # d_ds_et = 0.0
             d_ds_et = gamma_e**2 * (cortical_rowsum - s_et) - 2 * gamma_e * ds_et  # 0 if rowsum == 0 since ds_et == 0
