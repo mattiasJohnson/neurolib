@@ -473,7 +473,7 @@ def timeIntegration(params):
     )
 
 
-# @numba.njit(locals={"idxX": numba.int64, "idxY": numba.int64, "idx1": numba.int64, "idy1": numba.int64})
+@numba.njit(locals={"idxX": numba.int64, "idxY": numba.int64, "idx1": numba.int64, "idy1": numba.int64})
 def timeIntegration_njit_elementwise(
     dt,
     duration,
@@ -665,16 +665,8 @@ def timeIntegration_njit_elementwise(
         # -------------------------------------------------------------
 
         if not distr_delay:
-            # # Get the input from one node into another from the rates at time t - connection_delay - 1
-            # # remark: assume Kie == Kee and Kei == Kii
-            # for no in range(n_nodes_ctx):
-            #     # interareal coupling
-            #     for l in range(n_nodes_ctx):
-            #         # rd_exc(i,j) delayed input rate from population j to population i
-            #         rd_exc[l, no] = rates_exc[no, i - Dmat_ndt[l, no] - 1] * 1e-3  # convert Hz to kHz
-            #     # Warning: this is a vector and not a matrix as rd_exc
-            #     rd_inh[no] = rates_inh[no, i - ndt_di - 1] * 1e-3  # convert Hz to kHz
-
+            # Get the input from one node into another from the rates at time t - connection_delay - 1
+            # remark: assume Kie == Kee and Kei == Kii
             for to_node in range(n_nodes_tot):
                 # Cortical input
                 for from_node in range(n_nodes_ctx):
@@ -854,7 +846,7 @@ def timeIntegration_njit_elementwise(
             )  # mV/ms
 
         # -------------------------------------------------------------
-        # Thalamus (Single node so once every timestep as for now)
+        # Thalamus
         # -------------------------------------------------------------
 
         # loop through all the thalamic nodes
