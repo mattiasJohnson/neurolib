@@ -139,7 +139,7 @@ def loadDefaultParams(Cmat=None, Dmat=None, lookupTableFileName=None, seed=None,
 
     # neuron model parameters
     params.a = 0.0  # nS, can be 15.0
-    params.b = 15  # pA, can be 40.0
+    params.b = 15.0  # pA, can be 40.0
     params.EA = -80.0  # mV
     params.tauA = 1000.0  # ms
 
