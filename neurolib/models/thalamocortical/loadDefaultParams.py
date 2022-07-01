@@ -235,7 +235,8 @@ def loadDefaultParams(Cmat=None, Dmat=None, lookupTableFileName=None, seed=None,
     params.gamma_r = 100.0e-3  # 1/ms
     params.g_L = 1.0  # AU
     params.g_GABA = 1.0  # ms
-    params.g_AMPA = 1.0  # ms
+    params.g_AMPA_t = 1.0  # ms
+    params.g_AMPA_r = 1.0  # ms
     # params.g_LK = 0.018  # mS/cm^2
     params.E_AMPA = 0.0  # mV
     params.E_GABA = -70.0  # mV

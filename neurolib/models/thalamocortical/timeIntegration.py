@@ -253,7 +253,8 @@ def timeIntegration(params):
     sigma = params["sigma"]
     g_L = params["g_L"]
     E_L = params["E_L"]
-    g_AMPA = params["g_AMPA"]
+    g_AMPA_t = params["g_AMPA_t"]
+    g_AMPA_r = params["g_AMPA_r"]
     g_GABA = params["g_GABA"]
     E_AMPA = params["E_AMPA"]
     E_GABA = params["E_GABA"]
@@ -419,7 +420,8 @@ def timeIntegration(params):
         sigma,
         g_L,
         E_L,
-        g_AMPA,
+        g_AMPA_t,
+        g_AMPA_r,
         g_GABA,
         E_AMPA,
         E_GABA,
@@ -567,7 +569,8 @@ def timeIntegration_njit_elementwise(
     sigma,
     g_L,
     E_L,
-    g_AMPA,
+    g_AMPA_t,
+    g_AMPA_r,
     g_GABA,
     E_AMPA,
     E_GABA,
@@ -651,7 +654,7 @@ def timeIntegration_njit_elementwise(
     def _potassium_leak_current(voltage, g_LK):
         return g_LK * (voltage - E_K)
 
-    def _syn_exc_current(voltage, synaptic_rate):
+    def _syn_exc_current(voltage, synaptic_rate, g_AMPA):
         return g_AMPA * synaptic_rate * (voltage - E_AMPA)
 
     def _syn_inh_current(voltage, synaptic_rate):
@@ -857,9 +860,9 @@ def timeIntegration_njit_elementwise(
             I_leak_r = _leak_current(V_r[no, i - 1])
 
             # synaptic currents
-            I_et = _syn_exc_current(V_t[no, i - 1], s_et)
+            I_et = _syn_exc_current(V_t[no, i - 1], s_et, g_AMPA_t)
             I_gt = _syn_inh_current(V_t[no, i - 1], s_gt)
-            I_er = _syn_exc_current(V_r[no, i - 1], s_er)
+            I_er = _syn_exc_current(V_r[no, i - 1], s_er, g_AMPA_r)
             I_gr = _syn_inh_current(V_r[no, i - 1], s_gr)
 
             # potassium leak current
