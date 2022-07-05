@@ -311,19 +311,19 @@ def timeIntegration(params):
     Q_t[:, :startind] = Q_t_init
     Q_r[:, :startind] = Q_r_init
     # TODO: why convert first to array in loadDefault and now to float?
-    Ca = float(params["Ca_init"])
-    h_T_t = float(params["h_T_t_init"])
-    h_T_r = float(params["h_T_r_init"])
-    m_h1 = float(params["m_h1_init"])
-    m_h2 = float(params["m_h2_init"])
-    s_et = float(params["s_et_init"])
-    s_gt = float(params["s_gt_init"])
-    s_er = float(params["s_er_init"])
-    s_gr = float(params["s_gr_init"])
-    ds_et = float(params["ds_et_init"])
-    ds_gt = float(params["ds_gt_init"])
-    ds_er = float(params["ds_er_init"])
-    ds_gr = float(params["ds_gr_init"])
+    Ca = params["Ca_init"]
+    h_T_t = params["h_T_t_init"]
+    h_T_r = params["h_T_r_init"]
+    m_h1 = params["m_h1_init"]
+    m_h2 = params["m_h2_init"]
+    s_et = params["s_et_init"]
+    s_gt = params["s_gt_init"]
+    s_er = params["s_er_init"]
+    s_gr = params["s_gr_init"]
+    ds_et = params["ds_et_init"]
+    ds_gt = params["ds_gt_init"]
+    ds_er = params["ds_er_init"]
+    ds_gr = params["ds_gr_init"]
 
     noise_thalamus = np.random.standard_normal(len(t))
     
@@ -864,10 +864,10 @@ def timeIntegration_njit_elementwise(
             I_leak_r = _leak_current(V_r[no, i - 1])
 
             # synaptic currents
-            I_et = _syn_exc_current(V_t[no, i - 1], s_et, g_AMPA_t)
-            I_gt = _syn_inh_current(V_t[no, i - 1], s_gt)
-            I_er = _syn_exc_current(V_r[no, i - 1], s_er, g_AMPA_r)
-            I_gr = _syn_inh_current(V_r[no, i - 1], s_gr)
+            I_et = _syn_exc_current(V_t[no, i - 1], s_et[no], g_AMPA_t)
+            I_gt = _syn_inh_current(V_t[no, i - 1], s_gt[no])
+            I_er = _syn_exc_current(V_r[no, i - 1], s_er[no], g_AMPA_r)
+            I_gr = _syn_inh_current(V_r[no, i - 1], s_gr[no])
 
             # potassium leak current
             I_LK_t = _potassium_leak_current(V_t[no, i - 1], g_LK_t)
@@ -876,18 +876,18 @@ def timeIntegration_njit_elementwise(
             # T-type Ca current
             m_inf_T_t = 1.0 / (1.0 + np.exp(-(V_t[no, i - 1] + 59.0) / 6.2))
             m_inf_T_r = 1.0 / (1.0 + np.exp(-(V_r[no, i - 1] + 52.0) / 7.4))
-            I_T_t = g_T_t * m_inf_T_t * m_inf_T_t * h_T_t * (V_t[no, i - 1] - E_Ca)
-            I_T_r = g_T_r * m_inf_T_r * m_inf_T_r * h_T_r * (V_r[no, i - 1] - E_Ca)
+            I_T_t = g_T_t * m_inf_T_t * m_inf_T_t * h_T_t[no] * (V_t[no, i - 1] - E_Ca)
+            I_T_r = g_T_r * m_inf_T_r * m_inf_T_r * h_T_r[no] * (V_r[no, i - 1] - E_Ca)
 
             # h-type current
-            I_h = g_h * (m_h1 + g_inc * m_h2) * (V_t[no, i - 1] - E_h)
+            I_h = g_h * (m_h1[no] + g_inc * m_h2[no]) * (V_t[no, i - 1] - E_h)
 
             ### define derivatives
             # membrane potential
             d_V_t = -(I_leak_t + I_et + I_gt + ext_current_t) / tau - (1.0 / C_m) * (I_LK_t + I_T_t + I_h)
             d_V_r = -(I_leak_r + I_er + I_gr + ext_current_r) / tau - (1.0 / C_m) * (I_LK_r + I_T_r)
             # Calcium concentration
-            d_Ca = alpha_Ca * I_T_t - (Ca - Ca_0) / tau_Ca
+            d_Ca = alpha_Ca * I_T_t - (Ca[no] - Ca_0) / tau_Ca
             # channel dynamics
             h_inf_T_t = 1.0 / (1.0 + np.exp((V_t[no, i - 1] + 81.0) / 4.0))
             h_inf_T_r = 1.0 / (1.0 + np.exp((V_r[no, i - 1] + 80.0) / 5.0))
@@ -897,19 +897,19 @@ def timeIntegration_njit_elementwise(
             tau_h_T_r = (
                 85.0 + 1.0 / (np.exp((V_r[no, i - 1] + 48.0) / 4.0) + np.exp(-(V_r[no, i - 1] + 407.0) / 50.0))
             ) / 3.7371928
-            d_h_T_t = (h_inf_T_t - h_T_t) / tau_h_T_t
-            d_h_T_r = (h_inf_T_r - h_T_r) / tau_h_T_r
+            d_h_T_t = (h_inf_T_t - h_T_t[no]) / tau_h_T_t
+            d_h_T_r = (h_inf_T_r - h_T_r[no]) / tau_h_T_r
             m_inf_h = 1.0 / (1.0 + np.exp((V_t[no, i - 1] + 75.0) / 5.5))
             tau_m_h = 20.0 + 1000.0 / (np.exp((V_t[no, i - 1] + 71.5) / 14.2) + np.exp(-(V_t[no, i - 1] + 89.0) / 11.6))
             # Calcium channel dynamics
-            P_h = k1 * Ca**n_P / (k1 * Ca**n_P + k2)
-            d_m_h1 = (m_inf_h * (1.0 - m_h2) - m_h1) / tau_m_h - k3 * P_h * m_h1 + k4 * m_h2
-            d_m_h2 = k3 * P_h * m_h1 - k4 * m_h2
+            P_h = k1 * Ca[no]**n_P / (k1 * Ca[no]**n_P + k2)
+            d_m_h1 = (m_inf_h * (1.0 - m_h2[no]) - m_h1[no]) / tau_m_h - k3 * P_h * m_h1[no] + k4 * m_h2[no]
+            d_m_h2 = k3 * P_h * m_h1[no] - k4 * m_h2[no]
             # synaptic dynamics
-            d_s_et = ds_et
-            d_s_er = ds_er
-            d_s_gt = ds_gt
-            d_s_gr = ds_gr
+            d_s_et = ds_et[no]
+            d_s_er = ds_er[no]
+            d_s_gt = ds_gt[no]
+            d_s_gr = ds_gr[no]
 
             cortical_rowsum = 0
             for col in range(n_nodes_tot):
@@ -918,33 +918,33 @@ def timeIntegration_njit_elementwise(
             cortical_rowsums[no, i] = cortical_rowsum
 
             # d_ds_et = 0.0
-            d_ds_et = gamma_e**2 * (cortical_rowsum - s_et) - 2 * gamma_e * ds_et  # 0 if rowsum == 0 since ds_et == 0
-            # d_ds_er = gamma_e**2 * (N_rt * _firing_rate(V_t[no, i - 1]) - s_er) - 2 * gamma_e * ds_er
+            d_ds_et = gamma_e**2 * (cortical_rowsum - s_et[no]) - 2 * gamma_e * ds_et[no]  # 0 if rowsum == 0 since ds_et[no] == 0
+            # d_ds_er = gamma_e**2 * (N_rt * _firing_rate(V_t[no, i - 1]) - s_er[no]) - 2 * gamma_e * ds_er[no]
             d_ds_er = (
-                gamma_e**2 * (N_rt * _firing_rate(V_t[no, i - 1]) + cortical_rowsum - s_er) - 2 * gamma_e * ds_er
+                gamma_e**2 * (N_rt * _firing_rate(V_t[no, i - 1]) + cortical_rowsum - s_er[no]) - 2 * gamma_e * ds_er[no]
             )
-            d_ds_gt = gamma_r**2 * (N_tr * _firing_rate(V_r[no, i - 1]) - s_gt) - 2 * gamma_r * ds_gt
-            d_ds_gr = gamma_r**2 * (N_rr * _firing_rate(V_r[no, i - 1]) - s_gr) - 2 * gamma_r * ds_gr
+            d_ds_gt = gamma_r**2 * (N_tr * _firing_rate(V_r[no, i - 1]) - s_gt[no]) - 2 * gamma_r * ds_gt[no]
+            d_ds_gr = gamma_r**2 * (N_rr * _firing_rate(V_r[no, i - 1]) - s_gr[no]) - 2 * gamma_r * ds_gr[no]
 
             ### Euler integration
             V_t[no, i] = V_t[no, i - 1] + dt * d_V_t
             V_r[no, i] = V_r[no, i - 1] + dt * d_V_r
             Q_t[no, i] = _firing_rate(V_t[no, i]) * 1e3  # convert kHz to Hz
             Q_r[no, i] = _firing_rate(V_r[no, i]) * 1e3  # convert kHz to Hz
-            Ca = Ca + dt * d_Ca
-            h_T_t = h_T_t + dt * d_h_T_t
-            h_T_r = h_T_r + dt * d_h_T_r
-            m_h1 = m_h1 + dt * d_m_h1
-            m_h2 = m_h2 + dt * d_m_h2
-            s_et = s_et + dt * d_s_et
-            s_gt = s_gt + dt * d_s_gt
-            s_er = s_er + dt * d_s_er
-            s_gr = s_gr + dt * d_s_gr
+            Ca[no] = Ca[no] + dt * d_Ca
+            h_T_t[no] = h_T_t[no] + dt * d_h_T_t
+            h_T_r[no] = h_T_r[no] + dt * d_h_T_r
+            m_h1[no] = m_h1[no] + dt * d_m_h1
+            m_h2[no] = m_h2[no] + dt * d_m_h2
+            s_et[no] = s_et[no] + dt * d_s_et
+            s_gt[no] = s_gt[no] + dt * d_s_gt
+            s_er[no] = s_er[no] + dt * d_s_er
+            s_gr[no] = s_gr[no] + dt * d_s_gr
             # noisy variable
-            ds_et = ds_et + dt * d_ds_et + gamma_e**2 * d_phi * sqrt_dt * noise_thalamus[i-startind]
-            ds_gt = ds_gt + dt * d_ds_gt
-            ds_er = ds_er + dt * d_ds_er
-            ds_gr = ds_gr + dt * d_ds_gr
+            ds_et[no] = ds_et[no] + dt * d_ds_et + gamma_e**2 * d_phi * sqrt_dt * noise_thalamus[i-startind]
+            ds_gt[no] = ds_gt[no] + dt * d_ds_gt
+            ds_er[no] = ds_er[no] + dt * d_ds_er
+            ds_gr[no] = ds_gr[no] + dt * d_ds_gr
 
     return (
         t,
@@ -968,19 +968,19 @@ def timeIntegration_njit_elementwise(
         V_r,
         Q_t,
         Q_r,
-        np.array(Ca),
-        np.array(h_T_t),
-        np.array(h_T_r),
-        np.array(m_h1),
-        np.array(m_h2),
-        np.array(s_et),
-        np.array(s_gt),
-        np.array(s_er),
-        np.array(s_gr),
-        np.array(ds_et),
-        np.array(ds_gt),
-        np.array(ds_er),
-        np.array(ds_gr),
+        Ca,
+        h_T_t,
+        h_T_r,
+        m_h1,
+        m_h2,
+        s_et,
+        s_gt,
+        s_er,
+        s_gr,
+        ds_et,
+        ds_gt,
+        ds_er,
+        ds_gr,
         cortical_rowsums,
     )
 
