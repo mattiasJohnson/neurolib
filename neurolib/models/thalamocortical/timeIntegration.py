@@ -325,7 +325,9 @@ def timeIntegration(params):
     ds_er = float(params["ds_er_init"])
     ds_gr = float(params["ds_gr_init"])
 
-    noise_thalamus = np.random.standard_normal(startind + len(t))
+    noise_thalamus = np.random.standard_normal(len(t))
+    
+    cortical_rowsums = np.zeros((n_nodes_thal, len(t)+startind))
 
     return timeIntegration_njit_elementwise(
         dt,
@@ -472,6 +474,7 @@ def timeIntegration(params):
         ds_gr,
         n_nodes_thal,
         noise,
+        cortical_rowsums,
     )
 
 
@@ -621,6 +624,7 @@ def timeIntegration_njit_elementwise(
     ds_gr,
     n_nodes_thal,
     noise,
+    cortical_rowsums,
 ):
 
     # Global
@@ -910,6 +914,8 @@ def timeIntegration_njit_elementwise(
             cortical_rowsum = 0
             for col in range(n_nodes_tot):
                 cortical_rowsum = cortical_rowsum + Cmat[no + n_nodes_ctx, col] * rd_exc[no + n_nodes_ctx, col]
+                
+            cortical_rowsums[no, i] = cortical_rowsum
 
             # d_ds_et = 0.0
             d_ds_et = gamma_e**2 * (cortical_rowsum - s_et) - 2 * gamma_e * ds_et  # 0 if rowsum == 0 since ds_et == 0
@@ -935,7 +941,7 @@ def timeIntegration_njit_elementwise(
             s_er = s_er + dt * d_s_er
             s_gr = s_gr + dt * d_s_gr
             # noisy variable
-            ds_et = ds_et + dt * d_ds_et + gamma_e**2 * d_phi * sqrt_dt * noise_thalamus[i]
+            ds_et = ds_et + dt * d_ds_et + gamma_e**2 * d_phi * sqrt_dt * noise_thalamus[i-startind]
             ds_gt = ds_gt + dt * d_ds_gt
             ds_er = ds_er + dt * d_ds_er
             ds_gr = ds_gr + dt * d_ds_gr
@@ -975,6 +981,7 @@ def timeIntegration_njit_elementwise(
         np.array(ds_gt),
         np.array(ds_er),
         np.array(ds_gr),
+        cortical_rowsums,
     )
 
 
