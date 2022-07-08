@@ -255,7 +255,8 @@ def timeIntegration(params):
     E_L = params["E_L"]
     g_AMPA_t = params["g_AMPA_t"]
     g_AMPA_r = params["g_AMPA_r"]
-    g_GABA = params["g_GABA"]
+    g_GABA_t = params["g_GABA_t"]
+    g_GABA_r = params["g_GABA_r"]
     E_AMPA = params["E_AMPA"]
     E_GABA = params["E_GABA"]
     g_LK_t = params["g_LK_t"]
@@ -422,7 +423,8 @@ def timeIntegration(params):
         E_L,
         g_AMPA_t,
         g_AMPA_r,
-        g_GABA,
+        g_GABA_t,
+        g_GABA_r,
         E_AMPA,
         E_GABA,
         g_LK_t,
@@ -571,7 +573,8 @@ def timeIntegration_njit_elementwise(
     E_L,
     g_AMPA_t,
     g_AMPA_r,
-    g_GABA,
+    g_GABA_t,
+    g_GABA_r,
     E_AMPA,
     E_GABA,
     g_LK_t,
@@ -657,7 +660,7 @@ def timeIntegration_njit_elementwise(
     def _syn_exc_current(voltage, synaptic_rate, g_AMPA):
         return g_AMPA * synaptic_rate * (voltage - E_AMPA)
 
-    def _syn_inh_current(voltage, synaptic_rate):
+    def _syn_inh_current(voltage, synaptic_rate, g_GABA):
         return g_GABA * synaptic_rate * (voltage - E_GABA)
 
     ### integrate ODE system:
@@ -861,9 +864,9 @@ def timeIntegration_njit_elementwise(
 
             # synaptic currents
             I_et = _syn_exc_current(V_t[no, i - 1], s_et, g_AMPA_t)
-            I_gt = _syn_inh_current(V_t[no, i - 1], s_gt)
+            I_gt = _syn_inh_current(V_t[no, i - 1], s_gt, g_GABA_t)
             I_er = _syn_exc_current(V_r[no, i - 1], s_er, g_AMPA_r)
-            I_gr = _syn_inh_current(V_r[no, i - 1], s_gr)
+            I_gr = _syn_inh_current(V_r[no, i - 1], s_gr, g_GABA_r)
 
             # potassium leak current
             I_LK_t = _potassium_leak_current(V_t[no, i - 1], g_LK_t)
