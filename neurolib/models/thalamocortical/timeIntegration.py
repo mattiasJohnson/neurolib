@@ -867,10 +867,10 @@ def timeIntegration_njit_elementwise(
             I_leak_r = _leak_current(V_r[no, i - 1])
 
             # synaptic currents
-            I_et = _syn_exc_current(V_t[no, i - 1], s_et, g_AMPA_t)
-            I_gt = _syn_inh_current(V_t[no, i - 1], s_gt, g_GABA_t)
-            I_er = _syn_exc_current(V_r[no, i - 1], s_er, g_AMPA_r)
-            I_gr = _syn_inh_current(V_r[no, i - 1], s_gr, g_GABA_r)
+            I_et = _syn_exc_current(V_t[no, i - 1], s_et[no], g_AMPA_t)
+            I_gt = _syn_inh_current(V_t[no, i - 1], s_gt[no], g_GABA_t)
+            I_er = _syn_exc_current(V_r[no, i - 1], s_er[no], g_AMPA_r)
+            I_gr = _syn_inh_current(V_r[no, i - 1], s_gr[no], g_GABA_r)
 
             # potassium leak current
             I_LK_t = _potassium_leak_current(V_t[no, i - 1], g_LK_t)
