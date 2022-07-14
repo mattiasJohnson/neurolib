@@ -280,6 +280,7 @@ def timeIntegration(params):
     gamma_e = params["gamma_e"]
     gamma_r = params["gamma_r"]
     d_phi = params["d_phi"]
+    shift_HA = params["shift_HA"]
     N_rt = params["N_rt"]
     N_tr = params["N_tr"]
     N_rr = params["N_rr"]
@@ -449,6 +450,7 @@ def timeIntegration(params):
         gamma_e,
         gamma_r,
         d_phi,
+        shift_HA,
         noise_thalamus,
         ext_current_t,
         ext_current_r,
@@ -599,6 +601,7 @@ def timeIntegration_njit_elementwise(
     gamma_e,
     gamma_r,
     d_phi,
+    shift_HA,
     noise_thalamus,
     ext_current_t,
     ext_current_r,
@@ -898,7 +901,7 @@ def timeIntegration_njit_elementwise(
             ) / 3.7371928
             d_h_T_t = (h_inf_T_t - h_T_t[no]) / tau_h_T_t
             d_h_T_r = (h_inf_T_r - h_T_r[no]) / tau_h_T_r
-            m_inf_h = 1.0 / (1.0 + np.exp((V_t[no, i - 1] + 75.0) / 5.5))
+            m_inf_h = 1.0 / (1.0 + np.exp((V_t[no, i - 1] + 75.0 + shift_HA) / 5.5))
             tau_m_h = 20.0 + 1000.0 / (np.exp((V_t[no, i - 1] + 71.5) / 14.2) + np.exp(-(V_t[no, i - 1] + 89.0) / 11.6))
             # Calcium channel dynamics
             P_h = k1 * Ca[no]**n_P / (k1 * Ca[no]**n_P + k2)

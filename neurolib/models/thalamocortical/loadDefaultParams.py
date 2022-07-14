@@ -263,6 +263,7 @@ def loadDefaultParams(Cmat=None, Dmat=None, lookupTableFileName=None, seed=None,
     params.N_tr = 5.0
     # noise
     params.d_phi = 0.0
+    params.shift_HA = 0.0 # mV
 
     # specific thalamic reticular nuclei population - TRN (inhibitory)
     params.g_T_r = 2.3  # mS/cm^2
