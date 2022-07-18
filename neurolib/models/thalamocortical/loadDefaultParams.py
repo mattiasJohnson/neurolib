@@ -223,6 +223,9 @@ def loadDefaultParams(Cmat=None, Dmat=None, lookupTableFileName=None, seed=None,
     # ------------------------------------------------------------------------
     # Default thalamus parameters
     # ------------------------------------------------------------------------
+    
+    # Thalamus options
+    params.include_thal_rowsums = False  # For debug purposes, save rowsum in thalamus equation.
 
     # local parameters for both populations
     params.tau = 20.0

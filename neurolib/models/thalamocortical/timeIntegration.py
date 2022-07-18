@@ -327,6 +327,13 @@ def timeIntegration(params):
     ds_er = params["ds_er_init"]
     ds_gr = params["ds_gr_init"]
 
+    include_thal_rowsums = params["include_thal_rowsums"]
+
+    if include_thal_rowsums:
+        thal_rowsums = np.zeros((n_nodes_thal, startind + len(t)))
+    else:
+        thal_rowsums = np.zeros((1,1))  # Dummy variable, numba requires same type even when not used
+
     noise_thalamus = np.random.standard_normal(len(t))
 
     return timeIntegration_njit_elementwise(
@@ -476,6 +483,8 @@ def timeIntegration(params):
         ds_gr,
         n_nodes_thal,
         noise,
+        thal_rowsums,
+        include_thal_rowsums,
     )
 
 
@@ -627,6 +636,8 @@ def timeIntegration_njit_elementwise(
     ds_gr,
     n_nodes_thal,
     noise,
+    thal_rowsums,
+    include_thal_rowsums,
 ):
 
     # Global
@@ -917,6 +928,10 @@ def timeIntegration_njit_elementwise(
             for col in range(n_nodes_tot):
                 cortical_rowsum = cortical_rowsum + Cmat[no + n_nodes_ctx, col] * rd_exc[no + n_nodes_ctx, col]
                 
+            if include_thal_rowsums:
+                thal_rowsums[no, i] = cortical_rowsum
+                
+                
             # d_ds_et = 0.0
             d_ds_et = gamma_e**2 * (cortical_rowsum - s_et[no]) - 2 * gamma_e * ds_et[no]  # 0 if rowsum == 0 since ds_et[no] == 0
             # d_ds_er = gamma_e**2 * (N_rt * _firing_rate(V_t[no, i - 1]) - s_er[no]) - 2 * gamma_e * ds_er[no]
@@ -981,6 +996,7 @@ def timeIntegration_njit_elementwise(
         ds_gt,
         ds_er,
         ds_gr,
+        thal_rowsums,
     )
 
 
