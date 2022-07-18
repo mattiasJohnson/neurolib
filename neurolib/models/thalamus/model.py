@@ -69,7 +69,7 @@ class ThalamicMassModel(Model):
 
         # load default parameters if none were given
         if params is None:
-            params = dp.loadDefaultParams(seed=self.seed)
+            params = dp.loadDefaultParams(seed=seed)
 
         # Initialize base class Model
         super().__init__(integration=integration, params=params)
