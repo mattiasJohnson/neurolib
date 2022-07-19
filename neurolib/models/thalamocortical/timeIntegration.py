@@ -332,8 +332,16 @@ def timeIntegration(params):
 
     if include_thal_rowsums:
         thal_rowsums = np.zeros((n_nodes_thal, startind + len(t)))
+        I_T_t_array = np.zeros((n_nodes_thal, startind + len(t)))
+        I_T_r_array = np.zeros((n_nodes_thal, startind + len(t)))
+        I_h_array = np.zeros((n_nodes_thal, startind + len(t)))
+        Ca_array = np.zeros((n_nodes_thal, startind + len(t)))
     else:
         thal_rowsums = np.zeros((1,1))  # Dummy variable, numba requires same type even when not used
+        I_T_t_array = np.zeros((1,1))
+        I_T_r_array = np.zeros((1,1))
+        I_h_array = np.zeros((1,1))
+        Ca_array = np.zeros((1,1))
 
     noise_thalamus = np.random.standard_normal(len(t))
 
@@ -486,6 +494,10 @@ def timeIntegration(params):
         noise,
         thal_rowsums,
         include_thal_rowsums,
+        I_T_t_array,
+        I_T_r_array,
+        I_h_array,
+        Ca_array,
     )
 
 
@@ -639,6 +651,10 @@ def timeIntegration_njit_elementwise(
     noise,
     thal_rowsums,
     include_thal_rowsums,
+    I_T_t_array,
+    I_T_r_array,
+    I_h_array,
+    Ca_array,
 ):
 
     # Global
@@ -929,8 +945,6 @@ def timeIntegration_njit_elementwise(
             for col in range(n_nodes_tot):
                 cortical_rowsum = cortical_rowsum + Cmat[no + n_nodes_ctx, col] * rd_exc[no + n_nodes_ctx, col]
                 
-            if include_thal_rowsums:
-                thal_rowsums[no, i] = cortical_rowsum
                 
                 
             # d_ds_et = 0.0
@@ -961,6 +975,14 @@ def timeIntegration_njit_elementwise(
             ds_gt[no] = ds_gt[no] + dt * d_ds_gt
             ds_er[no] = ds_er[no] + dt * d_ds_er
             ds_gr[no] = ds_gr[no] + dt * d_ds_gr
+
+            # Debug variables
+            if include_thal_rowsums:
+                thal_rowsums[no, i] = cortical_rowsum
+                I_T_t_array[no, i] = I_T_t
+                I_T_r_array[no, i] = I_T_r
+                I_h_array[no, i] = I_h
+                Ca_array[no, i] = Ca[no]
 
     return (
         t,
@@ -998,6 +1020,10 @@ def timeIntegration_njit_elementwise(
         ds_er,
         ds_gr,
         thal_rowsums,
+        I_T_t_array,
+        I_T_r_array,
+        I_h_array,
+        Ca_array,
     )
 
 

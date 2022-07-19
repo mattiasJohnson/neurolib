@@ -84,8 +84,12 @@ class ThalamocorticalModel(Model):
         "ds_er",
         "ds_gr",
         "thal_rowsums",
+        "I_T_t_array",
+        "I_T_r_array",
+        "I_h_array",
+        "Ca_array",
     ]
-    output_vars = ["rates_exc", "rates_inh", "IA"] + ["V_t", "V_r", "Q_t", "Q_r"] + ["thal_rowsums"]
+    output_vars = ["rates_exc", "rates_inh", "IA"] + ["V_t", "V_r", "Q_t", "Q_r"] + ["thal_rowsums", "I_T_t_array", "I_T_r_array", "I_h_array", "Ca_array"]
     default_output = "rates_exc"
     input_vars = ["ext_exc_current", "ext_exc_rate"]
     default_input = "ext_exc_rate"
