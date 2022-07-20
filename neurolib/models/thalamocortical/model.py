@@ -83,6 +83,7 @@ class ThalamocorticalModel(Model):
         "ds_gt",
         "ds_er",
         "ds_gr",
+        # For debug
         "thal_rowsums",
         "I_T_t_array",
         "I_T_r_array",
@@ -118,7 +119,7 @@ class ThalamocorticalModel(Model):
         self.Dmat = Dmat  # Delay matrix
         self.lookupTableFileName = lookupTableFileName  # Filename for aLN lookup functions
         self.seed = seed  # Random seed
-
+        
         integration = ti.timeIntegration
 
         # load default parameters if none were given

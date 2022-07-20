@@ -41,7 +41,16 @@ def timeIntegration(params):
 
     # Connectivity matric
     # Interareal relative coupling strengths (values between 0 and 1), Cmat(i,j) connnection from jth to ith
-    Cmat = params["Cmat"]
+    params["Cmat_scaled"] = scaleCmat(
+        params["Cmat"],
+        params["ctx_to_ctx"],
+        params["ctx_to_thal"],
+        params["thal_to_ctx"],
+        params["thal_to_thal"],
+        params["n_nodes_ctx"],
+        params["n_nodes_thal"]
+    )
+    Cmat = params["Cmat_scaled"]
     c_gl = params["c_gl"]  # EPSP amplitude between areas
     Ke_gl = params["Ke_gl"]  # number of incoming E connections (to E population) from each area
 
@@ -1162,3 +1171,27 @@ def fast_interp2_opt(x, dx, xi, y, dy, yi):
         dyid = yid - yid1
 
     return xid1, yid1, dxid, dyid
+
+
+def scaleCmat(  
+    Cmat: np.ndarray,
+    ctx_to_ctx: float, 
+    ctx_to_thal: float,
+    thal_to_ctx: float,
+    thal_to_thal: float,
+    n_nodes_ctx: int,
+    n_nodes_thal: int,
+    ) -> np.ndarray:
+    """
+    Scales the different types of connections in Cmat.
+    E.g. ctx_to_thal scales the connections from cortex to thalamus. 
+    """
+
+    Cmat_new = Cmat.copy()
+
+    Cmat_new[0:n_nodes_ctx, 0:n_nodes_ctx] *= ctx_to_ctx
+    Cmat_new[n_nodes_ctx:n_nodes_ctx+n_nodes_thal, 0:n_nodes_ctx] *= ctx_to_thal
+    Cmat_new[0:n_nodes_ctx, n_nodes_ctx:n_nodes_ctx+n_nodes_thal] *= thal_to_ctx
+    Cmat_new[n_nodes_ctx:n_nodes_ctx+n_nodes_thal, n_nodes_ctx:n_nodes_ctx+n_nodes_thal] *= thal_to_thal
+
+    return Cmat_new

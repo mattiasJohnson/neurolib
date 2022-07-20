@@ -72,6 +72,14 @@ def loadDefaultParams(Cmat=None, Dmat=None, lookupTableFileName=None, seed=None,
     params.n_nodes_ctx = n_nodes_ctx
     params.n_nodes_thal = n_nodes_thal
     params.n_nodes_tot = params.n_nodes_ctx + params.n_nodes_thal
+    
+    # Scaling parameters of connectivity
+    params.ctx_to_ctx = 1.0
+    params.ctx_to_thal = 1.0
+    params.thal_to_ctx = 1.0
+    params.thal_to_thal = 1.0
+    params.Cmat_scaled = params.Cmat.copy()
+    
 
     # Signal transmission speed in mm/ms
     params.signalV = 20.0
