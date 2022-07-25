@@ -328,19 +328,19 @@ def timeIntegration(params):
     Q_t[:, :startind] = Q_t_init
     Q_r[:, :startind] = Q_r_init
     # TODO: why convert first to array in loadDefault and now to float?
-    Ca = params["Ca_init"]
-    h_T_t = params["h_T_t_init"]
-    h_T_r = params["h_T_r_init"]
-    m_h1 = params["m_h1_init"]
-    m_h2 = params["m_h2_init"]
-    s_et = params["s_et_init"]
-    s_gt = params["s_gt_init"]
-    s_er = params["s_er_init"]
-    s_gr = params["s_gr_init"]
-    ds_et = params["ds_et_init"]
-    ds_gt = params["ds_gt_init"]
-    ds_er = params["ds_er_init"]
-    ds_gr = params["ds_gr_init"]
+    Ca = params["Ca_init"].copy()
+    h_T_t = params["h_T_t_init"].copy()
+    h_T_r = params["h_T_r_init"].copy()
+    m_h1 = params["m_h1_init"].copy()
+    m_h2 = params["m_h2_init"].copy()
+    s_et = params["s_et_init"].copy()
+    s_gt = params["s_gt_init"].copy()
+    s_er = params["s_er_init"].copy()
+    s_gr = params["s_gr_init"].copy()
+    ds_et = params["ds_et_init"].copy()
+    ds_gt = params["ds_gt_init"].copy()
+    ds_er = params["ds_er_init"].copy()
+    ds_gr = params["ds_gr_init"].copy()
 
     include_thal_rowsums = params["include_thal_rowsums"]
 
