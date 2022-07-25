@@ -14,6 +14,7 @@ class ThalamocorticalModel(Model):
     description = "Thalamocortical model with 80 cortical nodes and 2 thalamic nodes."
 
     init_vars = [
+        # aln
         "rates_exc_init",
         "rates_inh_init",
         "mufe_init",
@@ -29,11 +30,11 @@ class ThalamocorticalModel(Model):
         "siiv_init",
         "mue_ou",
         "mui_ou",
-        # init_vars for thalamus
-        "V_t_init",
-        "V_r_init",
-        "Q_t_init",
-        "Q_r_init",
+        # thalamus
+        "voltage_tcr_init",
+        "voltage_trn_init",
+        "rates_tcr_init",
+        "rates_trn_init",
         "Ca_init",
         "h_T_t_init",
         "h_T_r_init",
@@ -50,6 +51,7 @@ class ThalamocorticalModel(Model):
     ]
 
     state_vars = [
+        # aln
         "rates_exc",
         "rates_inh",
         "mufe",
@@ -65,11 +67,11 @@ class ThalamocorticalModel(Model):
         "siiv",
         "mue_ou",
         "mui_ou",
-        # state_vars for thalamus
-        "V_t",
-        "V_r",
-        "Q_t",
-        "Q_r",
+        # thalamus
+        "voltage_tcr",
+        "voltage_trn",
+        "rates_tcr",
+        "rates_trn",
         "Ca",
         "h_T_t",
         "h_T_r",
@@ -90,7 +92,7 @@ class ThalamocorticalModel(Model):
         "I_h_array",
         "Ca_array",
     ]
-    output_vars = ["rates_exc", "rates_inh", "IA"] + ["V_t", "V_r", "Q_t", "Q_r"] + ["thal_rowsums", "I_T_t_array", "I_T_r_array", "I_h_array", "Ca_array"]
+    output_vars = ["rates_exc", "rates_inh", "IA"] + ["voltage_tcr", "voltage_trn", "rates_tcr", "rates_trn"] + ["thal_rowsums", "I_T_t_array", "I_T_r_array", "I_h_array", "Ca_array"]
     default_output = "rates_exc"
     input_vars = ["ext_exc_current", "ext_exc_rate"]
     default_input = "ext_exc_rate"

@@ -24,11 +24,11 @@ def timeIntegration(params):
       seiv:       n_nodes_ctx vector    : final value of seiv for each node
       siev:       n_nodes_ctx vector    : final value of siev for each node
       siiv:       n_nodes_ctx vector    : final value of siiv for each node
-      # TODO: Add units to thalamic time series like V_t:
-      V_t,        n_nodes_thal*L array  : contaning the exc. thalamic membrane potential
-      V_r,        n_nodes_thal*L array  : contaning the inh. thalamic membrane potential
-      Q_t,        n_nodes_thal*L array  : contaning the exc. thalamic mean fire rates
-      Q_r,        n_nodes_thal*L array  : contaning the inh. thalamic mean fire rates
+      # TODO: Add units to thalamic time series like voltage_tcr:
+      voltage_tcr,        n_nodes_thal*L array  : contaning the exc. thalamic membrane potential
+      voltage_trn,        n_nodes_thal*L array  : contaning the inh. thalamic membrane potential
+      rates_tcr,        n_nodes_thal*L array  : contaning the exc. thalamic mean fire rates
+      rates_trn,        n_nodes_thal*L array  : contaning the inh. thalamic mean fire rates
       Ca,         n_nodes_thal vector   : final value for Ca for each node
       h_T_t,      n_nodes_thal vector   : final value for h_T_t for each node
       h_T_r,      n_nodes_thal vector   : final value for h_T_r for each node
@@ -304,29 +304,29 @@ def timeIntegration(params):
     ext_current_r = params["ext_current_r"]
 
     # model output
-    V_t = np.zeros((n_nodes_thal, startind + len(t)))
-    V_r = np.zeros((n_nodes_thal, startind + len(t)))
-    Q_t = np.zeros((n_nodes_thal, startind + len(t)))
-    Q_r = np.zeros((n_nodes_thal, startind + len(t)))
+    voltage_tcr = np.zeros((n_nodes_thal, startind + len(t)))
+    voltage_trn = np.zeros((n_nodes_thal, startind + len(t)))
+    rates_tcr = np.zeros((n_nodes_thal, startind + len(t)))
+    rates_trn = np.zeros((n_nodes_thal, startind + len(t)))
     # Set initial Thalamus membrane potentials
     # if initial values are just a Nx1 array
-    if np.shape(params["V_t_init"])[1] == 1:
+    if np.shape(params["voltage_tcr_init"])[1] == 1:
         # repeat the 1-dim value startind times
-        V_t_init = params["V_t_init"] * np.ones((n_nodes_thal, startind))
-        V_r_init = params["V_r_init"] * np.ones((n_nodes_thal, startind))
-        Q_t_init = params["Q_t_init"] * np.ones((n_nodes_thal, startind))
-        Q_r_init = params["Q_r_init"] * np.ones((n_nodes_thal, startind))
+        voltage_tcr_init = params["voltage_tcr_init"] * np.ones((n_nodes_thal, startind))
+        voltage_trn_init = params["voltage_trn_init"] * np.ones((n_nodes_thal, startind))
+        rates_tcr_init = params["rates_tcr_init"] * np.ones((n_nodes_thal, startind))
+        rates_trn_init = params["rates_trn_init"] * np.ones((n_nodes_thal, startind))
     # if initial values are a Nxt array
     else:
-        V_t_init = params["V_t_init"][:, -startind:]
-        V_r_init = params["V_r_init"][:, -startind:]
-        Q_t_init = params["Q_t_init"][:, -startind:]
-        Q_r_init = params["Q_r_init"][:, -startind:]
+        voltage_tcr_init = params["voltage_tcr_init"][:, -startind:]
+        voltage_trn_init = params["voltage_trn_init"][:, -startind:]
+        rates_tcr_init = params["rates_tcr_init"][:, -startind:]
+        rates_trn_init = params["rates_trn_init"][:, -startind:]
     # init
-    V_t[:, :startind] = V_t_init
-    V_r[:, :startind] = V_r_init
-    Q_t[:, :startind] = Q_t_init
-    Q_r[:, :startind] = Q_r_init
+    voltage_tcr[:, :startind] = voltage_tcr_init
+    voltage_trn[:, :startind] = voltage_trn_init
+    rates_tcr[:, :startind] = rates_tcr_init
+    rates_trn[:, :startind] = rates_trn_init
     # TODO: why convert first to array in loadDefault and now to float?
     Ca = params["Ca_init"].copy()
     h_T_t = params["h_T_t_init"].copy()
@@ -487,10 +487,10 @@ def timeIntegration(params):
         N_rt,
         N_tr,
         N_rr,
-        V_t,
-        V_r,
-        Q_t,
-        Q_r,
+        voltage_tcr,
+        voltage_trn,
+        rates_tcr,
+        rates_trn,
         Ca,
         h_T_t,
         h_T_r,
@@ -644,10 +644,10 @@ def timeIntegration_njit_elementwise(
     N_rt,
     N_tr,
     N_rr,
-    V_t,
-    V_r,
-    Q_t,
-    Q_r,
+    voltage_tcr,
+    voltage_trn,
+    rates_tcr,
+    rates_trn,
     Ca,
     h_T_t,
     h_T_r,
@@ -730,7 +730,7 @@ def timeIntegration_njit_elementwise(
                 for idx_thal in range(n_nodes_thal):
                     from_node = idx_thal + n_nodes_ctx
                     rd_exc[to_node, from_node] = (
-                        Q_t[idx_thal, i - Dmat_ndt[to_node, from_node] - 1] * 1e-3
+                        rates_tcr[idx_thal, i - Dmat_ndt[to_node, from_node] - 1] * 1e-3
                     )  # convert Hz to kHz
 
             # Cortical inhibitory delayed input
@@ -904,47 +904,47 @@ def timeIntegration_njit_elementwise(
         for no in range(n_nodes_thal):
 
             # leak current
-            I_leak_t = _leak_current(V_t[no, i - 1])
-            I_leak_r = _leak_current(V_r[no, i - 1])
+            I_leak_t = _leak_current(voltage_tcr[no, i - 1])
+            I_leak_r = _leak_current(voltage_trn[no, i - 1])
 
             # synaptic currents
-            I_et = _syn_exc_current(V_t[no, i - 1], s_et[no], g_AMPA_t)
-            I_gt = _syn_inh_current(V_t[no, i - 1], s_gt[no], g_GABA_t)
-            I_er = _syn_exc_current(V_r[no, i - 1], s_er[no], g_AMPA_r)
-            I_gr = _syn_inh_current(V_r[no, i - 1], s_gr[no], g_GABA_r)
+            I_et = _syn_exc_current(voltage_tcr[no, i - 1], s_et[no], g_AMPA_t)
+            I_gt = _syn_inh_current(voltage_tcr[no, i - 1], s_gt[no], g_GABA_t)
+            I_er = _syn_exc_current(voltage_trn[no, i - 1], s_er[no], g_AMPA_r)
+            I_gr = _syn_inh_current(voltage_trn[no, i - 1], s_gr[no], g_GABA_r)
 
             # potassium leak current
-            I_LK_t = _potassium_leak_current(V_t[no, i - 1], g_LK_t)
-            I_LK_r = _potassium_leak_current(V_r[no, i - 1], g_LK_r)
+            I_LK_t = _potassium_leak_current(voltage_tcr[no, i - 1], g_LK_t)
+            I_LK_r = _potassium_leak_current(voltage_trn[no, i - 1], g_LK_r)
 
             # T-type Ca current
-            m_inf_T_t = 1.0 / (1.0 + np.exp(-(V_t[no, i - 1] + 59.0) / 6.2))
-            m_inf_T_r = 1.0 / (1.0 + np.exp(-(V_r[no, i - 1] + 52.0) / 7.4))
-            I_T_t = g_T_t * m_inf_T_t * m_inf_T_t * h_T_t[no] * (V_t[no, i - 1] - E_Ca)
-            I_T_r = g_T_r * m_inf_T_r * m_inf_T_r * h_T_r[no] * (V_r[no, i - 1] - E_Ca)
+            m_inf_T_t = 1.0 / (1.0 + np.exp(-(voltage_tcr[no, i - 1] + 59.0) / 6.2))
+            m_inf_T_r = 1.0 / (1.0 + np.exp(-(voltage_trn[no, i - 1] + 52.0) / 7.4))
+            I_T_t = g_T_t * m_inf_T_t * m_inf_T_t * h_T_t[no] * (voltage_tcr[no, i - 1] - E_Ca)
+            I_T_r = g_T_r * m_inf_T_r * m_inf_T_r * h_T_r[no] * (voltage_trn[no, i - 1] - E_Ca)
 
             # h-type current
-            I_h = g_h * (m_h1[no] + g_inc * m_h2[no]) * (V_t[no, i - 1] - E_h)
+            I_h = g_h * (m_h1[no] + g_inc * m_h2[no]) * (voltage_tcr[no, i - 1] - E_h)
 
             ### define derivatives
             # membrane potential
-            d_V_t = -(I_leak_t + I_et + I_gt + ext_current_t) / tau - (1.0 / C_m) * (I_LK_t + I_T_t + I_h)
-            d_V_r = -(I_leak_r + I_er + I_gr + ext_current_r) / tau - (1.0 / C_m) * (I_LK_r + I_T_r)
+            d_voltage_tcr = -(I_leak_t + I_et + I_gt + ext_current_t) / tau - (1.0 / C_m) * (I_LK_t + I_T_t + I_h)
+            d_voltage_trn = -(I_leak_r + I_er + I_gr + ext_current_r) / tau - (1.0 / C_m) * (I_LK_r + I_T_r)
             # Calcium concentration
             d_Ca = alpha_Ca * I_T_t - (Ca[no] - Ca_0) / tau_Ca
             # channel dynamics
-            h_inf_T_t = 1.0 / (1.0 + np.exp((V_t[no, i - 1] + 81.0) / 4.0))
-            h_inf_T_r = 1.0 / (1.0 + np.exp((V_r[no, i - 1] + 80.0) / 5.0))
+            h_inf_T_t = 1.0 / (1.0 + np.exp((voltage_tcr[no, i - 1] + 81.0) / 4.0))
+            h_inf_T_r = 1.0 / (1.0 + np.exp((voltage_trn[no, i - 1] + 80.0) / 5.0))
             tau_h_T_t = (
-                30.8 + (211.4 + np.exp((V_t[no, i - 1] + 115.2) / 5.0)) / (1.0 + np.exp((V_t[no, i - 1] + 86.0) / 3.2))
+                30.8 + (211.4 + np.exp((voltage_tcr[no, i - 1] + 115.2) / 5.0)) / (1.0 + np.exp((voltage_tcr[no, i - 1] + 86.0) / 3.2))
             ) / 3.7371928
             tau_h_T_r = (
-                85.0 + 1.0 / (np.exp((V_r[no, i - 1] + 48.0) / 4.0) + np.exp(-(V_r[no, i - 1] + 407.0) / 50.0))
+                85.0 + 1.0 / (np.exp((voltage_trn[no, i - 1] + 48.0) / 4.0) + np.exp(-(voltage_trn[no, i - 1] + 407.0) / 50.0))
             ) / 3.7371928
             d_h_T_t = (h_inf_T_t - h_T_t[no]) / tau_h_T_t
             d_h_T_r = (h_inf_T_r - h_T_r[no]) / tau_h_T_r
-            m_inf_h = 1.0 / (1.0 + np.exp((V_t[no, i - 1] + 75.0 + shift_HA) / 5.5))
-            tau_m_h = 20.0 + 1000.0 / (np.exp((V_t[no, i - 1] + 71.5) / 14.2) + np.exp(-(V_t[no, i - 1] + 89.0) / 11.6))
+            m_inf_h = 1.0 / (1.0 + np.exp((voltage_tcr[no, i - 1] + 75.0 + shift_HA) / 5.5))
+            tau_m_h = 20.0 + 1000.0 / (np.exp((voltage_tcr[no, i - 1] + 71.5) / 14.2) + np.exp(-(voltage_tcr[no, i - 1] + 89.0) / 11.6))
             # Calcium channel dynamics
             P_h = k1 * Ca[no]**n_P / (k1 * Ca[no]**n_P + k2)
             d_m_h1 = (m_inf_h * (1.0 - m_h2[no]) - m_h1[no]) / tau_m_h - k3 * P_h * m_h1[no] + k4 * m_h2[no]
@@ -961,18 +961,18 @@ def timeIntegration_njit_elementwise(
                 
             # d_ds_et = 0.0
             d_ds_et = gamma_e**2 * (cortical_rowsum - s_et[no]) - 2 * gamma_e * ds_et[no]  # 0 if rowsum == 0 since ds_et[no] == 0
-            # d_ds_er = gamma_e**2 * (N_rt * _firing_rate(V_t[no, i - 1]) - s_er[no]) - 2 * gamma_e * ds_er[no]
+            # d_ds_er = gamma_e**2 * (N_rt * _firing_rate(voltage_tcr[no, i - 1]) - s_er[no]) - 2 * gamma_e * ds_er[no]
             d_ds_er = (
-                gamma_e**2 * (N_rt * _firing_rate(V_t[no, i - 1]) + cortical_rowsum - s_er[no]) - 2 * gamma_e * ds_er[no]
+                gamma_e**2 * (N_rt * _firing_rate(voltage_tcr[no, i - 1]) + cortical_rowsum - s_er[no]) - 2 * gamma_e * ds_er[no]
             )
-            d_ds_gt = gamma_r**2 * (N_tr * _firing_rate(V_r[no, i - 1]) - s_gt[no]) - 2 * gamma_r * ds_gt[no]
-            d_ds_gr = gamma_r**2 * (N_rr * _firing_rate(V_r[no, i - 1]) - s_gr[no]) - 2 * gamma_r * ds_gr[no]
+            d_ds_gt = gamma_r**2 * (N_tr * _firing_rate(voltage_trn[no, i - 1]) - s_gt[no]) - 2 * gamma_r * ds_gt[no]
+            d_ds_gr = gamma_r**2 * (N_rr * _firing_rate(voltage_trn[no, i - 1]) - s_gr[no]) - 2 * gamma_r * ds_gr[no]
 
             ### Euler integration
-            V_t[no, i] = V_t[no, i - 1] + dt * d_V_t
-            V_r[no, i] = V_r[no, i - 1] + dt * d_V_r
-            Q_t[no, i] = _firing_rate(V_t[no, i]) * 1e3  # convert kHz to Hz
-            Q_r[no, i] = _firing_rate(V_r[no, i]) * 1e3  # convert kHz to Hz
+            voltage_tcr[no, i] = voltage_tcr[no, i - 1] + dt * d_voltage_tcr
+            voltage_trn[no, i] = voltage_trn[no, i - 1] + dt * d_voltage_trn
+            rates_tcr[no, i] = _firing_rate(voltage_tcr[no, i]) * 1e3  # convert kHz to Hz
+            rates_trn[no, i] = _firing_rate(voltage_trn[no, i]) * 1e3  # convert kHz to Hz
             Ca[no] = Ca[no] + dt * d_Ca
             h_T_t[no] = h_T_t[no] + dt * d_h_T_t
             h_T_r[no] = h_T_r[no] + dt * d_h_T_r
@@ -998,7 +998,7 @@ def timeIntegration_njit_elementwise(
 
     return (
         t,
-        # ALN
+        # aln
         rates_exc,
         rates_inh,
         mufe,
@@ -1014,11 +1014,11 @@ def timeIntegration_njit_elementwise(
         siiv,
         mue_ou,
         mui_ou,
-        # Thalamus
-        V_t,
-        V_r,
-        Q_t,
-        Q_r,
+        # thalamus
+        voltage_tcr,
+        voltage_trn,
+        rates_tcr,
+        rates_trn,
         Ca,
         h_T_t,
         h_T_r,
@@ -1032,7 +1032,7 @@ def timeIntegration_njit_elementwise(
         ds_gt,
         ds_er,
         ds_gr,
-        # Thalamus debug
+        # thalamus debug
         thal_rowsums,
         I_T_t_array,
         I_T_r_array,

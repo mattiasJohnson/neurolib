@@ -9,7 +9,7 @@ def loadDefaultParams(Cmat=None, Dmat=None, lookupTableFileName=None, seed=None,
     """
     Load default parameters for a network of connected ALN and thalamic nodes.
 
-    :param Cmat: Structural connectivity matrix (adjacency matrix) of coupling strengths. Assumes first `n_nodes_ctx` indices are cortical and following `n_nodes_thal` indices thalamic. If not given, then a model with a single ALN and thalamic node each will be assumed, defaults to None
+    :param Cmat: Structural connectivity matrix (adjacency matrix) of coupling strengths. Assumes first `n_nodes_ctx` indices are cortical and following `n_nodes_thal` indices thalamic. If not given, then a model with a single aln and thalamic node will be assumed, defaults to None
     :type Cmat: numpy.ndarray, optional
     :param Dmat: Fiber length matrix, will be used for computing the delay matrix together with the signal transmission speed parameter `signalV`, defaults to None
     :type Dmat: numpy.ndarray, optional
@@ -26,7 +26,7 @@ def loadDefaultParams(Cmat=None, Dmat=None, lookupTableFileName=None, seed=None,
 
     params.model = "thalamocortical"
     params.name = "thalamocortical"
-    params.description = "Thalamocortical model with cortical and thalamic nodes."
+    params.description = "Thalamocortical model with aln and thalamus nodes."
 
     # runtime parameters
     # thalamus is really sensitive, so either you integrate with very small dt or use an adaptive integration step
@@ -175,10 +175,10 @@ def loadDefaultParams(Cmat=None, Dmat=None, lookupTableFileName=None, seed=None,
         params.rates_exc_init,
         params.rates_inh_init,
         # Thalamus initial conditions:
-        params.V_t_init,
-        params.V_r_init,
-        params.Q_t_init,
-        params.Q_r_init,
+        params.voltage_tcr_init,
+        params.voltage_trn_init,
+        params.rates_tcr_init,
+        params.rates_trn_init,
         params.Ca_init,
         params.h_T_t_init,
         params.h_T_r_init,
@@ -328,26 +328,26 @@ def generateRandomICs(n_nodes_ctx, n_nodes_thal, seed=None):
     np.random.seed(seed)  # TODO: For debug, remove when not needed. Ensures sanity check of identical output from thalamocortical to native aln and thalamus given same seed.
 
     # Thalamus
-    V_t_init = np.random.uniform(-75, -50, (n_nodes_thal, 1))
-    V_r_init = np.random.uniform(-75, -50, (n_nodes_thal, 1))
-    Q_t_init = np.random.uniform(0.0, 200.0, (n_nodes_thal, 1))
-    Q_r_init = np.random.uniform(0.0, 200.0, (n_nodes_thal, 1))
-    Ca_init = np.ones(n_nodes_thal) * 2.4e-4
-    h_T_t_init = np.zeros(n_nodes_thal)
-    h_T_r_init = np.zeros(n_nodes_thal)
-    m_h1_init = np.zeros(n_nodes_thal)
-    m_h2_init = np.zeros(n_nodes_thal)
-    s_et_init = np.zeros(n_nodes_thal)
-    s_gt_init = np.zeros(n_nodes_thal)
-    s_er_init = np.zeros(n_nodes_thal)
-    s_gr_init = np.zeros(n_nodes_thal)
-    ds_et_init = np.zeros(n_nodes_thal)
-    ds_gt_init = np.zeros(n_nodes_thal)
-    ds_er_init = np.zeros(n_nodes_thal)
-    ds_gr_init = np.zeros(n_nodes_thal)
+    voltage_tcr_init = np.random.uniform(-75, -50, (n_nodes_thal, 1))
+    voltage_trn_init = np.random.uniform(-75, -50, (n_nodes_thal, 1))
+    rates_tcr_init = np.random.uniform(0.0, 200.0, (n_nodes_thal, 1))
+    rates_trn_init = np.random.uniform(0.0, 200.0, (n_nodes_thal, 1))
+    Ca_init = np.ones((n_nodes_thal,)) * 2.4e-4
+    h_T_t_init = np.zeros((n_nodes_thal,))
+    h_T_r_init = np.zeros((n_nodes_thal,))
+    m_h1_init = np.zeros((n_nodes_thal,))
+    m_h2_init = np.zeros((n_nodes_thal,))
+    s_et_init = np.zeros((n_nodes_thal,))
+    s_gt_init = np.zeros((n_nodes_thal,))
+    s_er_init = np.zeros((n_nodes_thal,))
+    s_gr_init = np.zeros((n_nodes_thal,))
+    ds_et_init = np.zeros((n_nodes_thal,))
+    ds_gt_init = np.zeros((n_nodes_thal,))
+    ds_er_init = np.zeros((n_nodes_thal,))
+    ds_gr_init = np.zeros((n_nodes_thal,))
 
     return (
-        # ALN
+        # aln
         mufe_init,
         mufi_init,
         IA_init,
@@ -362,10 +362,10 @@ def generateRandomICs(n_nodes_ctx, n_nodes_thal, seed=None):
         rates_exc_init,
         rates_inh_init,
         # Thalamus
-        V_t_init,
-        V_r_init,
-        Q_t_init,
-        Q_r_init,
+        voltage_tcr_init,
+        voltage_trn_init,
+        rates_tcr_init,
+        rates_trn_init,
         Ca_init,
         h_T_t_init,
         h_T_r_init,
