@@ -109,7 +109,7 @@ class ThalamocorticalModel(Model):
     ):
         """
         :param params: parameter dictionary of the model
-        :param Cmat: Global connectivity matrix (connects E to E)
+        :param Cmat: Global connectivity matrix between the exc. aln and exc. thalamic nodes. Assumes first `n_nodes_ctx` indices are cortical
         :param Dmat: Distance matrix between all nodes (in mm)
         :param lookupTableFileName: Filename for precomputed transfer functions and tables
         :param seed: Random number generator seed

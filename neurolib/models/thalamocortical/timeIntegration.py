@@ -10,38 +10,38 @@ def timeIntegration(params):
     Sets up the parameters for time integration
 
     Return:
-      rates_exc:  n_nodes_ctx*L array   : containing the exc. neuron rates in kHz time series for each aln node
-      rates_inh:  n_nodes_ctx*L array   : containing the inh. neuron rates in kHz time series for each aln node
-      t:          L array               : time in ms
-      mufe:       n_nodes_ctx vector    : final value of mufe for each node
-      mufi:       n_nodes_ctx vector    : final value of mufi for each node
-      IA:         n_nodes_ctx vector    : final value of IA   for each node
-      seem:       n_nodes_ctx vector    : final value of seem for each node
-      seim:       n_nodes_ctx vector    : final value of seim for each node
-      siem:       n_nodes_ctx vector    : final value of siem for each node
-      siim:       n_nodes_ctx vector    : final value of siim for each node
-      seev:       n_nodes_ctx vector    : final value of seev for each node
-      seiv:       n_nodes_ctx vector    : final value of seiv for each node
-      siev:       n_nodes_ctx vector    : final value of siev for each node
-      siiv:       n_nodes_ctx vector    : final value of siiv for each node
+      rates_exc:    n_nodes_ctx*L array   : containing the exc. neuron rates in kHz time series for each aln node
+      rates_inh:    n_nodes_ctx*L array   : containing the inh. neuron rates in kHz time series for each aln node
+      t:            L array               : time in ms
+      mufe:         n_nodes_ctx vector    : final value of mufe for each node
+      mufi:         n_nodes_ctx vector    : final value of mufi for each node
+      IA:           n_nodes_ctx vector    : final value of IA   for each node
+      seem:         n_nodes_ctx vector    : final value of seem for each node
+      seim:         n_nodes_ctx vector    : final value of seim for each node
+      siem:         n_nodes_ctx vector    : final value of siem for each node
+      siim:         n_nodes_ctx vector    : final value of siim for each node
+      seev:         n_nodes_ctx vector    : final value of seev for each node
+      seiv:         n_nodes_ctx vector    : final value of seiv for each node
+      siev:         n_nodes_ctx vector    : final value of siev for each node
+      siiv:         n_nodes_ctx vector    : final value of siiv for each node
       # TODO: Add units to thalamic time series like voltage_tcr:
-      voltage_tcr,        n_nodes_thal*L array  : contaning the exc. thalamic membrane potential
-      voltage_trn,        n_nodes_thal*L array  : contaning the inh. thalamic membrane potential
-      rates_tcr,        n_nodes_thal*L array  : contaning the exc. thalamic mean fire rates
-      rates_trn,        n_nodes_thal*L array  : contaning the inh. thalamic mean fire rates
-      Ca,         n_nodes_thal vector   : final value for Ca for each node
-      h_T_t,      n_nodes_thal vector   : final value for h_T_t for each node
-      h_T_r,      n_nodes_thal vector   : final value for h_T_r for each node
-      m_h1,       n_nodes_thal vector   : final value for m_h1 for each node
-      m_h2,       n_nodes_thal vector   : final value for m_h2 for each node
-      s_et,       n_nodes_thal vector   : final value for s_et for each node
-      s_gt,       n_nodes_thal vector   : final value for s_gt for each node
-      s_er,       n_nodes_thal vector   : final value for s_er for each node
-      s_gr,       n_nodes_thal vector   : final value for s_gr for each node
-      ds_et,      n_nodes_thal vector   : final value for ds_et for each node
-      ds_gt,      n_nodes_thal vector   : final value for ds_gt for each node
-      ds_er,      n_nodes_thal vector   : final value for ds_er for each node
-      ds_gr,      n_nodes_thal vector   : final value for ds_gr for each node
+      voltage_tcr,  n_nodes_thal*L array  : contaning the exc. thalamic membrane potential
+      voltage_trn,  n_nodes_thal*L array  : contaning the inh. thalamic membrane potential
+      rates_tcr,    n_nodes_thal*L array  : contaning the exc. thalamic mean fire rates
+      rates_trn,    n_nodes_thal*L array  : contaning the inh. thalamic mean fire rates
+      Ca,           n_nodes_thal vector   : final value for Ca for each node
+      h_T_t,        n_nodes_thal vector   : final value for h_T_t for each node
+      h_T_r,        n_nodes_thal vector   : final value for h_T_r for each node
+      m_h1,         n_nodes_thal vector   : final value for m_h1 for each node
+      m_h2,         n_nodes_thal vector   : final value for m_h2 for each node
+      s_et,         n_nodes_thal vector   : final value for s_et for each node
+      s_gt,         n_nodes_thal vector   : final value for s_gt for each node
+      s_er,         n_nodes_thal vector   : final value for s_er for each node
+      s_gr,         n_nodes_thal vector   : final value for s_gr for each node
+      ds_et,        n_nodes_thal vector   : final value for ds_et for each node
+      ds_gt,        n_nodes_thal vector   : final value for ds_gt for each node
+      ds_er,        n_nodes_thal vector   : final value for ds_er for each node
+      ds_gr,        n_nodes_thal vector   : final value for ds_gr for each node
 
     :param params: Parameter dictionary of the model
     :type params: dict
@@ -366,6 +366,7 @@ def timeIntegration(params):
         filter_sigma,
         Cmat,
         Dmat,
+        # aln
         c_gl,
         Ke_gl,
         tau_ou,
@@ -441,11 +442,7 @@ def timeIntegration(params):
         ext_inh_current,
         noise_exc,
         noise_inh,
-        # Thalamus
-        # startind,
-        # t,
-        # dt,
-        # sqrt_dt,
+        # thalamus
         Q_max,
         C1,
         theta,
@@ -523,6 +520,7 @@ def timeIntegration_njit_elementwise(
     filter_sigma,
     Cmat,
     Dmat,
+    # aln
     c_gl,
     Ke_gl,
     tau_ou,
@@ -598,11 +596,7 @@ def timeIntegration_njit_elementwise(
     ext_inh_current,
     noise_exc,
     noise_inh,
-    # Thalamus
-    # startind,
-    # t,
-    # dt,
-    # sqrt_dt,
+    # thalamus
     Q_max,
     C1,
     theta,
