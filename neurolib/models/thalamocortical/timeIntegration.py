@@ -6,23 +6,42 @@ from ...utils import model_utils as mu
 
 
 def timeIntegration(params):
-    """Sets up the parameters for time integration
+    """
+    Sets up the parameters for time integration
 
     Return:
-      rates_exc:  N*L array   : containing the exc. neuron rates in kHz time series of the N nodes
-      rates_inh:  N*L array   : containing the inh. neuron rates in kHz time series of the N nodes
-      t:          L array     : time in ms
-      mufe:       N vector    : final value of mufe for each node
-      mufi:       N vector    : final value of mufi for each node
-      IA:         N vector    : final value of IA   for each node
-      seem :      N vector    : final value of seem  for each node
-      seim :      N vector    : final value of seim  for each node
-      siem :      N vector    : final value of siem  for each node
-      siim :      N vector    : final value of siim  for each node
-      seev :      N vector    : final value of seev  for each node
-      seiv :      N vector    : final value of seiv  for each node
-      siev :      N vector    : final value of siev  for each node
-      siiv :      N vector    : final value of siiv  for each node
+      rates_exc:  n_nodes_ctx*L array   : containing the exc. neuron rates in kHz time series for each aln node
+      rates_inh:  n_nodes_ctx*L array   : containing the inh. neuron rates in kHz time series for each aln node
+      t:          L array               : time in ms
+      mufe:       n_nodes_ctx vector    : final value of mufe for each node
+      mufi:       n_nodes_ctx vector    : final value of mufi for each node
+      IA:         n_nodes_ctx vector    : final value of IA   for each node
+      seem:       n_nodes_ctx vector    : final value of seem for each node
+      seim:       n_nodes_ctx vector    : final value of seim for each node
+      siem:       n_nodes_ctx vector    : final value of siem for each node
+      siim:       n_nodes_ctx vector    : final value of siim for each node
+      seev:       n_nodes_ctx vector    : final value of seev for each node
+      seiv:       n_nodes_ctx vector    : final value of seiv for each node
+      siev:       n_nodes_ctx vector    : final value of siev for each node
+      siiv:       n_nodes_ctx vector    : final value of siiv for each node
+      # TODO: Add units to thalamic time series like V_t:
+      V_t,        n_nodes_thal*L array  : contaning the exc. thalamic membrane potential
+      V_r,        n_nodes_thal*L array  : contaning the inh. thalamic membrane potential
+      Q_t,        n_nodes_thal*L array  : contaning the exc. thalamic mean fire rates
+      Q_r,        n_nodes_thal*L array  : contaning the inh. thalamic mean fire rates
+      Ca,         n_nodes_thal vector   : final value for Ca for each node
+      h_T_t,      n_nodes_thal vector   : final value for h_T_t for each node
+      h_T_r,      n_nodes_thal vector   : final value for h_T_r for each node
+      m_h1,       n_nodes_thal vector   : final value for m_h1 for each node
+      m_h2,       n_nodes_thal vector   : final value for m_h2 for each node
+      s_et,       n_nodes_thal vector   : final value for s_et for each node
+      s_gt,       n_nodes_thal vector   : final value for s_gt for each node
+      s_er,       n_nodes_thal vector   : final value for s_er for each node
+      s_gr,       n_nodes_thal vector   : final value for s_gr for each node
+      ds_et,      n_nodes_thal vector   : final value for ds_et for each node
+      ds_gt,      n_nodes_thal vector   : final value for ds_gt for each node
+      ds_er,      n_nodes_thal vector   : final value for ds_er for each node
+      ds_gr,      n_nodes_thal vector   : final value for ds_gr for each node
 
     :param params: Parameter dictionary of the model
     :type params: dict
@@ -31,10 +50,13 @@ def timeIntegration(params):
     """
 
     dt = params["dt"]  # Time step for the Euler intergration (ms)
+    sqrt_dt = np.sqrt(dt)
     duration = params["duration"]  # Simulation duration (ms)
+    # Floating point issue in np.arange() workaraound: use integers in np.arange()
+    t = np.arange(1, round(duration, 6) / dt + 1) * dt  # Time variable (ms)
     RNGseed = params["seed"]  # seed for RNG
-    noise = params["noise"]
     # set to 0 for faster computation
+    cortical_noise = params["cortical_noise"]  # TODO: for debug, remove when not needed.
 
     # ------------------------------------------------------------------------
     # global coupling parameters
@@ -43,10 +65,10 @@ def timeIntegration(params):
     # Interareal relative coupling strengths (values between 0 and 1), Cmat(i,j) connnection from jth to ith
     params["Cmat_scaled"] = scaleCmat(
         params["Cmat"],
-        params["ctx_to_ctx"],
-        params["ctx_to_thal"],
-        params["thal_to_ctx"],
-        params["thal_to_thal"],
+        params["scale_ctx_to_ctx"],
+        params["scale_ctx_to_thal"],
+        params["scale_thal_to_ctx"],
+        params["scale_thal_to_thal"],
         params["n_nodes_ctx"],
         params["n_nodes_thal"]
     )
@@ -162,19 +184,11 @@ def timeIntegration(params):
     Irange = params["Irange"]
 
     # Initialization
-    # Floating point issue in np.arange() workaraound: use integers in np.arange()
-    t = np.arange(1, round(duration, 6) / dt + 1) * dt  # Time variable (ms)
-    sqrt_dt = np.sqrt(dt)
-
     ndt_de = np.around(de / dt).astype(int)
     ndt_di = np.around(di / dt).astype(int)
 
     rd_exc = np.zeros((n_nodes_tot, n_nodes_tot))  # kHz  rd_exc(i,j): Connection from jth node to ith
     rd_inh = np.zeros(n_nodes_ctx)
-
-    # Already done above when Dmat_ndt is built
-    # for l in range(N):
-    #    Dmat_ndt[l, l] = ndt_de  # if no distributed, this is a fixed value (E-E coupling)
 
     max_global_delay = max(np.max(Dmat_ndt), ndt_de, ndt_di)
     startind = int(max_global_delay + 1)
@@ -219,7 +233,7 @@ def timeIntegration(params):
     np.random.seed(RNGseed)
 
     # Save the noise in the rates array to save memory
-    if noise:
+    if cortical_noise:
         rates_exc[:, startind:] = np.random.standard_normal((n_nodes_ctx, len(t)))
         rates_inh[:, startind:] = np.random.standard_normal((n_nodes_ctx, len(t)))
     else:
@@ -247,15 +261,6 @@ def timeIntegration(params):
     # Thalamus parameters
     # ------------------------------------------------------------------------
 
-    # dt = params["dt"]  # Time step for the Euler intergration (ms)
-    # sqrt_dt = np.sqrt(dt)
-    # duration = params["duration"]  # Simulation duration (ms)
-    # RNGseed = params["seed"]  # seed for RNG
-
-    # startind = 1  # int(max_global_delay + 1)
-    t = np.arange(1, round(duration, 6) / dt + 1) * dt  # Time variable (ms)
-
-    # parameters
     tau = params["tau"]
     Q_max = params["Q_max"]
     C1 = params["C1"]
@@ -500,7 +505,7 @@ def timeIntegration(params):
         ds_er,
         ds_gr,
         n_nodes_thal,
-        noise,
+        cortical_noise,
         thal_rowsums,
         include_thal_rowsums,
         I_T_t_array,
@@ -657,7 +662,7 @@ def timeIntegration_njit_elementwise(
     ds_er,
     ds_gr,
     n_nodes_thal,
-    noise,
+    cortical_noise,
     thal_rowsums,
     include_thal_rowsums,
     I_T_t_array,
@@ -740,7 +745,7 @@ def timeIntegration_njit_elementwise(
             noise_exc[no] = rates_exc[no, i]
             noise_inh[no] = rates_inh[no, i]
 
-            if noise:
+            if cortical_noise:
                 mue = Jee_max * seem[no] + Jei_max * seim[no] + mue_ou[no] + ext_exc_current[no, i]
                 mui = Jie_max * siem[no] + Jii_max * siim[no] + mui_ou[no] + ext_inh_current[no, i]
             else:
@@ -954,8 +959,6 @@ def timeIntegration_njit_elementwise(
             for col in range(n_nodes_tot):
                 cortical_rowsum = cortical_rowsum + Cmat[no + n_nodes_ctx, col] * rd_exc[no + n_nodes_ctx, col]
                 
-                
-                
             # d_ds_et = 0.0
             d_ds_et = gamma_e**2 * (cortical_rowsum - s_et[no]) - 2 * gamma_e * ds_et[no]  # 0 if rowsum == 0 since ds_et[no] == 0
             # d_ds_er = gamma_e**2 * (N_rt * _firing_rate(V_t[no, i - 1]) - s_er[no]) - 2 * gamma_e * ds_er[no]
@@ -985,7 +988,7 @@ def timeIntegration_njit_elementwise(
             ds_er[no] = ds_er[no] + dt * d_ds_er
             ds_gr[no] = ds_gr[no] + dt * d_ds_gr
 
-            # Debug variables
+            # Thalamus debug variables
             if include_thal_rowsums:
                 thal_rowsums[no, i] = cortical_rowsum
                 I_T_t_array[no, i] = I_T_t
@@ -995,6 +998,7 @@ def timeIntegration_njit_elementwise(
 
     return (
         t,
+        # ALN
         rates_exc,
         rates_inh,
         mufe,
@@ -1028,6 +1032,7 @@ def timeIntegration_njit_elementwise(
         ds_gt,
         ds_er,
         ds_gr,
+        # Thalamus debug
         thal_rowsums,
         I_T_t_array,
         I_T_r_array,
@@ -1175,10 +1180,10 @@ def fast_interp2_opt(x, dx, xi, y, dy, yi):
 
 def scaleCmat(  
     Cmat: np.ndarray,
-    ctx_to_ctx: float, 
-    ctx_to_thal: float,
-    thal_to_ctx: float,
-    thal_to_thal: float,
+    scale_ctx_to_ctx: float, 
+    scale_ctx_to_thal: float,
+    scale_thal_to_ctx: float,
+    scale_thal_to_thal: float,
     n_nodes_ctx: int,
     n_nodes_thal: int,
     ) -> np.ndarray:
@@ -1189,9 +1194,9 @@ def scaleCmat(
 
     Cmat_new = Cmat.copy()
 
-    Cmat_new[0:n_nodes_ctx, 0:n_nodes_ctx] *= ctx_to_ctx
-    Cmat_new[n_nodes_ctx:n_nodes_ctx+n_nodes_thal, 0:n_nodes_ctx] *= ctx_to_thal
-    Cmat_new[0:n_nodes_ctx, n_nodes_ctx:n_nodes_ctx+n_nodes_thal] *= thal_to_ctx
-    Cmat_new[n_nodes_ctx:n_nodes_ctx+n_nodes_thal, n_nodes_ctx:n_nodes_ctx+n_nodes_thal] *= thal_to_thal
+    Cmat_new[0:n_nodes_ctx, 0:n_nodes_ctx] *= scale_ctx_to_ctx
+    Cmat_new[n_nodes_ctx:n_nodes_ctx+n_nodes_thal, 0:n_nodes_ctx] *= scale_ctx_to_thal
+    Cmat_new[0:n_nodes_ctx, n_nodes_ctx:n_nodes_ctx+n_nodes_thal] *= scale_thal_to_ctx
+    Cmat_new[n_nodes_ctx:n_nodes_ctx+n_nodes_thal, n_nodes_ctx:n_nodes_ctx+n_nodes_thal] *= scale_thal_to_thal
 
     return Cmat_new

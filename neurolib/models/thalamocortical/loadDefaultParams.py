@@ -6,8 +6,10 @@ from ...utils.collections import star_dotdict
 
 
 def loadDefaultParams(Cmat=None, Dmat=None, lookupTableFileName=None, seed=None, n_nodes_ctx=None, n_nodes_thal=None):
-    """Load default parameters for a network of aLN nodes.
-    :param Cmat: Structural connectivity matrix (adjacency matrix) of coupling strengths, will be normalized to 1. If not given, then a single node simulation will be assumed, defaults to None
+    """
+    Load default parameters for a network of connected ALN and thalamic nodes.
+
+    :param Cmat: Structural connectivity matrix (adjacency matrix) of coupling strengths. Assumes first `n_nodes_ctx` indices are cortical and following `n_nodes_thal` indices thalamic. If not given, then a model with a single ALN and thalamic node each will be assumed, defaults to None
     :type Cmat: numpy.ndarray, optional
     :param Dmat: Fiber length matrix, will be used for computing the delay matrix together with the signal transmission speed parameter `signalV`, defaults to None
     :type Dmat: numpy.ndarray, optional
@@ -22,19 +24,17 @@ def loadDefaultParams(Cmat=None, Dmat=None, lookupTableFileName=None, seed=None,
 
     params = star_dotdict({})
 
-    # Todo: Model metadata
-    # recently added for easier simulation of aln and brian in pypet
     params.model = "thalamocortical"
     params.name = "thalamocortical"
-    params.description = "Thalamocortical model with 80 cortical nodes and 2 thalamic nodes."
+    params.description = "Thalamocortical model with cortical and thalamic nodes."
 
     # runtime parameters
     # thalamus is really sensitive, so either you integrate with very small dt or use an adaptive integration step
     params.dt = 0.01  # ms
-    params.duration = 10000  # Simulation duration (ms)
+    params.duration = 10000  # simulation duration (ms)
     np.random.seed(seed)  # seed for RNG of noise and ICs
     params.seed = seed
-    params.noise = True
+    params.cortical_noise = True  # TODO: for testing, remove when not needed.
 
     # options
     params.warn = 0  # warn if limits of lookup tables are exceeded
@@ -47,10 +47,7 @@ def loadDefaultParams(Cmat=None, Dmat=None, lookupTableFileName=None, seed=None,
     # global whole-brain network parameters
     # ------------------------------------------------------------------------
 
-    # TODO: assumes no parameter or all parameters given (in line with their use before tho so maybe okay)
-
     if Cmat is None:
-        # params.N = 1
         params.Cmat = np.array([[0, 0.12], [1.2, 0]])
         lengthMat = np.zeros((2, 2))
         lengthMat[0, 1] = 13 * 20  # corresponds to 13 ms delay
@@ -59,7 +56,6 @@ def loadDefaultParams(Cmat=None, Dmat=None, lookupTableFileName=None, seed=None,
     else:
         params.Cmat = Cmat.copy()  # coupling matrix
         np.fill_diagonal(params.Cmat, 0)  # no self connections
-        # params.N = len(params.Cmat)  # number of nodes
         params.lengthMat = Dmat  # delay matrix
 
     # Number of cortical and thalamic nodes
@@ -74,13 +70,12 @@ def loadDefaultParams(Cmat=None, Dmat=None, lookupTableFileName=None, seed=None,
     params.n_nodes_tot = params.n_nodes_ctx + params.n_nodes_thal
     
     # Scaling parameters of connectivity
-    params.ctx_to_ctx = 1.0
-    params.ctx_to_thal = 1.0
-    params.thal_to_ctx = 1.0
-    params.thal_to_thal = 1.0
+    params.scale_ctx_to_ctx = 1.0
+    params.scale_ctx_to_thal = 1.0
+    params.scale_thal_to_ctx = 1.0
+    params.scale_thal_to_thal = 1.0
     params.Cmat_scaled = params.Cmat.copy()
     
-
     # Signal transmission speed in mm/ms
     params.signalV = 20.0
 
@@ -91,7 +86,7 @@ def loadDefaultParams(Cmat=None, Dmat=None, lookupTableFileName=None, seed=None,
     params.Ke_gl = 250.0
 
     # ------------------------------------------------------------------------
-    # local E-I node parameters
+    # ALN: local E-I node parameters
     # ------------------------------------------------------------------------
 
     # external input parameters:
@@ -102,8 +97,8 @@ def loadDefaultParams(Cmat=None, Dmat=None, lookupTableFileName=None, seed=None,
 
     # Ornstein-Uhlenbeck noise state variables, set to mean input
     # mue_ou will fluctuate around mue_ext_mean (mean of the OU process)
-    params.mue_ou = params.mue_ext_mean * np.ones((params.n_nodes_ctx,))  # np.zeros((params.N,))
-    params.mui_ou = params.mui_ext_mean * np.ones((params.n_nodes_ctx,))  # np.zeros((params.N,))
+    params.mue_ou = params.mue_ext_mean * np.ones((params.n_nodes_ctx,))
+    params.mui_ou = params.mui_ext_mean * np.ones((params.n_nodes_ctx,))
 
     # external neuronal firing rate input
     params.ext_exc_rate = 0.0  # kHz external excitatory rate drive
@@ -163,23 +158,23 @@ def loadDefaultParams(Cmat=None, Dmat=None, lookupTableFileName=None, seed=None,
 
     # ------------------------------------------------------------------------
 
-    # TODO: set all values directly with params.mufe_init
     # Generate and set random initial conditions
     (
-        mufe_init,
-        mufi_init,
-        IA_init,
-        seem_init,
-        seim_init,
-        seev_init,
-        seiv_init,
-        siim_init,
-        siem_init,
-        siiv_init,
-        siev_init,
-        rates_exc_init,
-        rates_inh_init,
-        # Thalamus
+        # ALN initial conditions:
+        params.mufe_init,  # (linear) filtered mean input
+        params.mufi_init,
+        params.IA_init,  # adaptation current
+        params.seem_init,  # mean of fraction of active synapses [0-1] (post-synaptic variable), chap. 4.2
+        params.seim_init,  # variance of fraction of active synapses [0-1]
+        params.seev_init,
+        params.seiv_init,
+        params.siim_init,
+        params.siem_init,
+        params.siiv_init,
+        params.siev_init,
+        params.rates_exc_init,
+        params.rates_inh_init,
+        # Thalamus initial conditions:
         params.V_t_init,
         params.V_r_init,
         params.Q_t_init,
@@ -199,20 +194,6 @@ def loadDefaultParams(Cmat=None, Dmat=None, lookupTableFileName=None, seed=None,
         params.ds_gr_init,
     ) = generateRandomICs(params.n_nodes_ctx, params.n_nodes_thal, seed)
 
-    params.mufe_init = mufe_init  # (linear) filtered mean input
-    params.mufi_init = mufi_init  #
-    params.IA_init = IA_init  # adaptation current
-    params.seem_init = seem_init  # mean of fraction of active synapses [0-1] (post-synaptic variable), chap. 4.2
-    params.seim_init = seim_init  #
-    params.seev_init = seev_init  # variance of fraction of active synapses [0-1]
-    params.seiv_init = seiv_init  #
-    params.siim_init = siim_init  #
-    params.siem_init = siem_init  #
-    params.siiv_init = siiv_init  #
-    params.siev_init = siev_init  #
-    params.rates_exc_init = rates_exc_init  #
-    params.rates_inh_init = rates_inh_init  #
-
     # load precomputed aLN transfer functions from hdfs
     if lookupTableFileName is None:
         lookupTableFileName = os.path.join(os.path.dirname(__file__), "aln-precalc", "quantities_cascade.h5")
@@ -229,11 +210,11 @@ def loadDefaultParams(Cmat=None, Dmat=None, lookupTableFileName=None, seed=None,
     params.precalc_tau_sigma = hf.get("tau_sigma_exp")[()]
 
     # ------------------------------------------------------------------------
-    # Default thalamus parameters
+    # Default thalamic parameters
     # ------------------------------------------------------------------------
     
     # Thalamus options
-    params.include_thal_rowsums = False  # For debug purposes, save rowsum in thalamus equation.
+    params.include_thal_rowsums = False  # TODO: Include more thalamic variables. For debug purposes, remove when not needed.
 
     # local parameters for both populations
     params.tau = 20.0
@@ -287,12 +268,6 @@ def loadDefaultParams(Cmat=None, Dmat=None, lookupTableFileName=None, seed=None,
     params.ext_current_t = 0.0
     params.ext_current_r = 0.0
 
-    # TODO: fix connections
-    # always 1 node only - no network of multiple "thalamuses"
-    # params.N = 1
-    # params.Cmat = np.zeros((1, 1))
-    # params.lengthMat = np.zeros((1, 1))
-
     return params
 
 
@@ -317,20 +292,25 @@ def computeDelayMatrix(lengthMat, signalV, segmentLength=1):
     return Dmat
 
 
+# TODO: split this up in two for more clarity? + will sneakily fix setting seed twice without looking odd.
 def generateRandomICs(n_nodes_ctx, n_nodes_thal, seed=None):
-    """Generates random Initial Conditions for the interareal network
+    """
+    Generates random Initial Conditions for the interareal network
 
-    :params N:  Number of area in the large scale network
+    :params n_nodes_ctx: Number of cortical nodes.
+    :params n_nodes_thal: Number of thalamic nodes.
+
 
     :returns:   A tuple of length 24 representing initial state of the model.
-                    First 9 elements are N-length numpy arrays representining:
-                    mufe_init, IA_init, mufi_init, sem_init, sev_init,
-                    sim_init, siv_init, rates_exc_init, rates_inh_init
-                    Following 15 elements are floats representing initial state of thalamus.
+                First 9 elements are `n_nodes_ctx` long numpy arrays representing:
+                mufe_init, IA_init, mufi_init, sem_init, sev_init,
+                sim_init, siv_init, rates_exc_init, rates_inh_init
+                Following 15 elements are `n_nodes_thal` long numpy arrays representing initial state of thalamus.
     """
     np.random.seed(seed)
 
     # Cortex
+    # TODO: Why are all not same shape? Why rates_exc_init two dimensional but most other ones one-dimensional?
     mufe_init = 3 * np.random.uniform(0, 1, (n_nodes_ctx,))  # mV/ms
     mufi_init = 3 * np.random.uniform(0, 1, (n_nodes_ctx,))  # mV/ms
     seem_init = 0.5 * np.random.uniform(0, 1, (n_nodes_ctx,))
@@ -345,8 +325,7 @@ def generateRandomICs(n_nodes_ctx, n_nodes_thal, seed=None):
     rates_inh_init = 0.01 * np.random.uniform(0, 1, (n_nodes_ctx, 1))
     IA_init = 200.0 * np.random.uniform(0, 1, (n_nodes_ctx, 1))  # pA
 
-    # Temporary fix for getting same random values when comparing with only thalamus model
-    np.random.seed(seed)
+    np.random.seed(seed)  # TODO: For debug, remove when not needed. Ensures sanity check of identical output from thalamocortical to native aln and thalamus given same seed.
 
     # Thalamus
     V_t_init = np.random.uniform(-75, -50, (n_nodes_thal, 1))
@@ -368,6 +347,7 @@ def generateRandomICs(n_nodes_ctx, n_nodes_thal, seed=None):
     ds_gr_init = np.zeros(n_nodes_thal)
 
     return (
+        # ALN
         mufe_init,
         mufi_init,
         IA_init,
@@ -386,7 +366,6 @@ def generateRandomICs(n_nodes_ctx, n_nodes_thal, seed=None):
         V_r_init,
         Q_t_init,
         Q_r_init,
-        # TODO: clean this up or why was it there?
         Ca_init,
         h_T_t_init,
         h_T_r_init,
