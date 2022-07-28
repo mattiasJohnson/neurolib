@@ -43,6 +43,18 @@ def loadDefaultParams(Cmat=None, Dmat=None, lookupTableFileName=None, seed=None,
     params.filter_sigma = 0  # if 1, filter sigmae/sigmai
     params.fast_interp = 1  # if 1, Interpolate the value from the look-up table instead of taking the closest value
 
+    # optional timeseries to save (each defaults to False to save ram)
+    params.timeseries_to_save = {
+            "IA": False,
+            "voltage_tcr": False,
+            "voltage_trn": False,
+            "thal_rowsum": False,
+            "I_T_a": False,
+            "I_T_a": False,
+            "I_a": False,
+            "Ca": False,
+    }
+
     # ------------------------------------------------------------------------
     # global whole-brain network parameters
     # ------------------------------------------------------------------------
@@ -128,6 +140,7 @@ def loadDefaultParams(Cmat=None, Dmat=None, lookupTableFileName=None, seed=None,
     params.tau_de = 1.0  # ms  "EE = IE"
     params.tau_di = 1.0  # ms  "EI = II"
 
+    #TODO: these should probably be 0.3 0.5 like aln model
     # PSC amplitudes
     params.cee = 0.24691358  # mV/ms
     params.cie = 0.23076923  # AMPA
@@ -212,9 +225,6 @@ def loadDefaultParams(Cmat=None, Dmat=None, lookupTableFileName=None, seed=None,
     # ------------------------------------------------------------------------
     # Default thalamic parameters
     # ------------------------------------------------------------------------
-    
-    # Thalamus options
-    params.include_thal_rowsums = False  # TODO: Include more thalamic variables. For debug purposes, remove when not needed.
 
     # local parameters for both populations
     params.tau = 20.0
@@ -323,13 +333,13 @@ def generateRandomICs(n_nodes_ctx, n_nodes_thal, seed=None):
     siev_init = 0.01 * np.random.uniform(0, 1, (n_nodes_ctx,))
     rates_exc_init = 0.01 * np.random.uniform(0, 1, (n_nodes_ctx, 1))
     rates_inh_init = 0.01 * np.random.uniform(0, 1, (n_nodes_ctx, 1))
-    IA_init = 200.0 * np.random.uniform(0, 1, (n_nodes_ctx, 1))  # pA
+    IA_init = 200.0 * np.random.uniform(0, 1, (n_nodes_ctx,))  # pA
 
     np.random.seed(seed)  # TODO: For debug, remove when not needed. Ensures sanity check of identical output from thalamocortical to native aln and thalamus given same seed.
 
     # Thalamus
-    voltage_tcr_init = np.random.uniform(-75, -50, (n_nodes_thal, 1))
-    voltage_trn_init = np.random.uniform(-75, -50, (n_nodes_thal, 1))
+    voltage_tcr_init = np.random.uniform(-75, -50, (n_nodes_thal,))
+    voltage_trn_init = np.random.uniform(-75, -50, (n_nodes_thal,))
     rates_tcr_init = np.random.uniform(0.0, 200.0, (n_nodes_thal, 1))
     rates_trn_init = np.random.uniform(0.0, 200.0, (n_nodes_thal, 1))
     Ca_init = np.ones((n_nodes_thal,)) * 2.4e-4

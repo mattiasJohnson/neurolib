@@ -197,13 +197,12 @@ def timeIntegration(params):
     # they store initial conditions AND simulated data
     rates_exc = np.zeros((n_nodes_ctx, startind + len(t)))
     rates_inh = np.zeros((n_nodes_ctx, startind + len(t)))
-    IA = np.zeros((n_nodes_ctx, startind + len(t)))
 
     # ------------------------------------------------------------------------
     # Set initial values
     mufe = params["mufe_init"].copy()  # Filtered mean input (mu) for exc. population
     mufi = params["mufi_init"].copy()  # Filtered mean input (mu) for inh. population
-    IA_init = params["IA_init"].copy()  # Adaptation current (pA)
+    IA = params["IA_init"].copy()  # Adaptation current (pA)
     seem = params["seem_init"].copy()  # Mean exc synaptic input
     seim = params["seim_init"].copy()
     seev = params["seev_init"].copy()  # Exc synaptic input variance
@@ -222,17 +221,14 @@ def timeIntegration(params):
         # repeat the 1-dim value startind times
         rates_exc_init = params["rates_exc_init"] * np.ones((n_nodes_ctx, startind))  # kHz
         rates_inh_init = params["rates_inh_init"] * np.ones((n_nodes_ctx, startind))  # kHz
-        # set initial adaptation current
-        IA_init = params["IA_init"] * np.ones((n_nodes_ctx, startind))
     # if initial values are a Nxt array
     else:
         rates_exc_init = params["rates_exc_init"][:, -startind:]
         rates_inh_init = params["rates_inh_init"][:, -startind:]
-        IA_init = params["IA_init"][:, -startind:]
 
     np.random.seed(RNGseed)
 
-    # Save the noise in the rates array to save memory
+    # Save the noise in the rates array to save memory TODO: if noise is zero here why have if statement in timeIntegration loop to check if should add as well?
     if cortical_noise:
         rates_exc[:, startind:] = np.random.standard_normal((n_nodes_ctx, len(t)))
         rates_inh[:, startind:] = np.random.standard_normal((n_nodes_ctx, len(t)))
@@ -243,7 +239,6 @@ def timeIntegration(params):
     # Set the initial conditions
     rates_exc[:, :startind] = rates_exc_init
     rates_inh[:, :startind] = rates_inh_init
-    IA[:, :startind] = IA_init
 
     # TODO: why not just have a single variable instead of array if all the noise is saved in rates_exc anyway?
     # Guess: maybe it won't make a difference for performance (in which case the local variable should be easier)
@@ -304,29 +299,23 @@ def timeIntegration(params):
     ext_current_r = params["ext_current_r"]
 
     # model output
-    voltage_tcr = np.zeros((n_nodes_thal, startind + len(t)))
-    voltage_trn = np.zeros((n_nodes_thal, startind + len(t)))
     rates_tcr = np.zeros((n_nodes_thal, startind + len(t)))
     rates_trn = np.zeros((n_nodes_thal, startind + len(t)))
-    # Set initial Thalamus membrane potentials
+    # Set initial Thalamus fire rates
     # if initial values are just a Nx1 array
     if np.shape(params["voltage_tcr_init"])[1] == 1:
         # repeat the 1-dim value startind times
-        voltage_tcr_init = params["voltage_tcr_init"] * np.ones((n_nodes_thal, startind))
-        voltage_trn_init = params["voltage_trn_init"] * np.ones((n_nodes_thal, startind))
         rates_tcr_init = params["rates_tcr_init"] * np.ones((n_nodes_thal, startind))
         rates_trn_init = params["rates_trn_init"] * np.ones((n_nodes_thal, startind))
-    # if initial values are a Nxt array
-    else:
-        voltage_tcr_init = params["voltage_tcr_init"][:, -startind:]
-        voltage_trn_init = params["voltage_trn_init"][:, -startind:]
+    else:  # if initial values are a Nxt array
         rates_tcr_init = params["rates_tcr_init"][:, -startind:]
         rates_trn_init = params["rates_trn_init"][:, -startind:]
     # init
-    voltage_tcr[:, :startind] = voltage_tcr_init
-    voltage_trn[:, :startind] = voltage_trn_init
     rates_tcr[:, :startind] = rates_tcr_init
     rates_trn[:, :startind] = rates_trn_init
+
+    voltage_tcr = params["voltage_tcr_init"].copy()
+    voltage_trn = params["voltage_trn_init"].copy()
     # TODO: why convert first to array in loadDefault and now to float?
     Ca = params["Ca_init"].copy()
     h_T_t = params["h_T_t_init"].copy()
@@ -342,20 +331,46 @@ def timeIntegration(params):
     ds_er = params["ds_er_init"].copy()
     ds_gr = params["ds_gr_init"].copy()
 
-    include_thal_rowsums = params["include_thal_rowsums"]
+    
+    # TODO: move this section inside of timeIntegration to not have to send all parameters, although only if not needing any more fancy init of arrays
 
-    if include_thal_rowsums:
-        thal_rowsums = np.zeros((n_nodes_thal, startind + len(t)))
+    # Saving optional timeseries setup
+    timeseries_to_save = params["timeseries_to_save"]
+
+    # Even if not saving anything numba needs the variables to still be arrays
+    IA_array = np.zeros((1,1))
+    voltage_tcr_array = np.zeros((1,1))
+    voltage_trn_array = np.zeros((1,1))
+    thal_rowsum_array = np.zeros((1,1))
+    I_T_t_array = np.zeros((1,1))
+    I_T_r_array = np.zeros((1,1))
+    I_h_array = np.zeros((1,1))
+    Ca_array = np.zeros((1,1))
+
+    if timeseries_to_save["IA"]:
+        IA_array = np.zeros((n_nodes_thal, startind + len(t)))
+
+    if timeseries_to_save["voltage_tcr"]:
+        voltage_tcr_array = np.zeros((n_nodes_thal, startind + len(t)))
+
+    if timeseries_to_save["voltage_trn"]:
+        voltage_trn_array = np.zeros((n_nodes_thal, startind + len(t)))
+
+    if timeseries_to_save["thal_rowsum"]:
+        thal_rowsum_array = np.zeros((n_nodes_thal, startind + len(t)))
+
+    if timeseries_to_save["I_T_t"]:
         I_T_t_array = np.zeros((n_nodes_thal, startind + len(t)))
+
+    if timeseries_to_save["I_T_r"]:
         I_T_r_array = np.zeros((n_nodes_thal, startind + len(t)))
+
+    if timeseries_to_save["I_h"]:
         I_h_array = np.zeros((n_nodes_thal, startind + len(t)))
+
+    if timeseries_to_save["Ca"]:
         Ca_array = np.zeros((n_nodes_thal, startind + len(t)))
-    else:
-        thal_rowsums = np.zeros((1,1))  # Dummy variable, numba requires same type even when not used
-        I_T_t_array = np.zeros((1,1))
-        I_T_r_array = np.zeros((1,1))
-        I_h_array = np.zeros((1,1))
-        Ca_array = np.zeros((1,1))
+
 
     noise_thalamus = np.random.standard_normal(len(t))
 
@@ -503,8 +518,11 @@ def timeIntegration(params):
         ds_gr,
         n_nodes_thal,
         cortical_noise,
-        thal_rowsums,
-        include_thal_rowsums,
+        timeseries_to_save,
+        IA_array,
+        voltage_tcr_array,
+        voltage_trn_array,
+        thal_rowsum_array,
         I_T_t_array,
         I_T_r_array,
         I_h_array,
@@ -657,8 +675,11 @@ def timeIntegration_njit_elementwise(
     ds_gr,
     n_nodes_thal,
     cortical_noise,
-    thal_rowsums,
-    include_thal_rowsums,
+    timeseries_to_save,
+    IA_array,
+    voltage_tcr_array,
+    voltage_trn_array,
+    thal_rowsum_array,
     I_T_t_array,
     I_T_r_array,
     I_h_array,
@@ -796,7 +817,7 @@ def timeIntegration_njit_elementwise(
             # ------- excitatory population
             # mufe[no] - IA[no] / C is the total current of the excitatory population
             xid1, yid1, dxid, dyid = fast_interp2_opt(
-                sigmarange, ds, sigmae_f, Irange, dI, mufe[no] - IA[no, i - 1] / C
+                sigmarange, ds, sigmae_f, Irange, dI, mufe[no] - IA[no] / C
             )
             xid1, yid1 = int(xid1), int(yid1)
 
@@ -825,7 +846,7 @@ def timeIntegration_njit_elementwise(
             mufi_rhs = (mui - mufi[no]) / tau_inh
 
             # rate has to be kHz
-            IA_rhs = (a * (Vmean_exc - EA) - IA[no, i - 1] + tauA * b * rates_exc[no, i] * 1e-3) / tauA
+            IA_rhs = (a * (Vmean_exc - EA) - IA[no] + tauA * b * rates_exc[no, i] * 1e-3) / tauA
 
             # EQ. 4.43
             if distr_delay:
@@ -850,7 +871,7 @@ def timeIntegration_njit_elementwise(
 
             mufe[no] = mufe[no] + dt * mufe_rhs
             mufi[no] = mufi[no] + dt * mufi_rhs
-            IA[no, i] = IA[no, i - 1] + dt * IA_rhs
+            IA[no] = IA[no] + dt * IA_rhs
 
             if distr_delay:
                 rd_exc[no, no] = rd_exc[no, no] + dt * rd_exc_rhs
@@ -890,6 +911,10 @@ def timeIntegration_njit_elementwise(
                 mui_ou[no] + (mui_ext_mean - mui_ou[no]) * dt / tau_ou + sigma_ou * sqrt_dt * noise_inh[no]
             )  # mV/ms
 
+            # optional saving of IA time series
+            if timeseries_to_save["IA"]:
+                IA_array[no, i] = IA
+
         # -------------------------------------------------------------
         # Thalamus
         # -------------------------------------------------------------
@@ -898,27 +923,27 @@ def timeIntegration_njit_elementwise(
         for no in range(n_nodes_thal):
 
             # leak current
-            I_leak_t = _leak_current(voltage_tcr[no, i - 1])
-            I_leak_r = _leak_current(voltage_trn[no, i - 1])
+            I_leak_t = _leak_current(voltage_tcr[no])
+            I_leak_r = _leak_current(voltage_trn[no])
 
             # synaptic currents
-            I_et = _syn_exc_current(voltage_tcr[no, i - 1], s_et[no], g_AMPA_t)
-            I_gt = _syn_inh_current(voltage_tcr[no, i - 1], s_gt[no], g_GABA_t)
-            I_er = _syn_exc_current(voltage_trn[no, i - 1], s_er[no], g_AMPA_r)
-            I_gr = _syn_inh_current(voltage_trn[no, i - 1], s_gr[no], g_GABA_r)
+            I_et = _syn_exc_current(voltage_tcr[no], s_et[no], g_AMPA_t)
+            I_gt = _syn_inh_current(voltage_tcr[no], s_gt[no], g_GABA_t)
+            I_er = _syn_exc_current(voltage_trn[no], s_er[no], g_AMPA_r)
+            I_gr = _syn_inh_current(voltage_trn[no], s_gr[no], g_GABA_r)
 
             # potassium leak current
-            I_LK_t = _potassium_leak_current(voltage_tcr[no, i - 1], g_LK_t)
-            I_LK_r = _potassium_leak_current(voltage_trn[no, i - 1], g_LK_r)
+            I_LK_t = _potassium_leak_current(voltage_tcr[no], g_LK_t)
+            I_LK_r = _potassium_leak_current(voltage_trn[no], g_LK_r)
 
             # T-type Ca current
-            m_inf_T_t = 1.0 / (1.0 + np.exp(-(voltage_tcr[no, i - 1] + 59.0) / 6.2))
-            m_inf_T_r = 1.0 / (1.0 + np.exp(-(voltage_trn[no, i - 1] + 52.0) / 7.4))
-            I_T_t = g_T_t * m_inf_T_t * m_inf_T_t * h_T_t[no] * (voltage_tcr[no, i - 1] - E_Ca)
-            I_T_r = g_T_r * m_inf_T_r * m_inf_T_r * h_T_r[no] * (voltage_trn[no, i - 1] - E_Ca)
+            m_inf_T_t = 1.0 / (1.0 + np.exp(-(voltage_tcr[no] + 59.0) / 6.2))
+            m_inf_T_r = 1.0 / (1.0 + np.exp(-(voltage_trn[no] + 52.0) / 7.4))
+            I_T_t = g_T_t * m_inf_T_t * m_inf_T_t * h_T_t[no] * (voltage_tcr[no] - E_Ca)
+            I_T_r = g_T_r * m_inf_T_r * m_inf_T_r * h_T_r[no] * (voltage_trn[no] - E_Ca)
 
             # h-type current
-            I_h = g_h * (m_h1[no] + g_inc * m_h2[no]) * (voltage_tcr[no, i - 1] - E_h)
+            I_h = g_h * (m_h1[no] + g_inc * m_h2[no]) * (voltage_tcr[no] - E_h)
 
             ### define derivatives
             # membrane potential
@@ -927,18 +952,18 @@ def timeIntegration_njit_elementwise(
             # Calcium concentration
             d_Ca = alpha_Ca * I_T_t - (Ca[no] - Ca_0) / tau_Ca
             # channel dynamics
-            h_inf_T_t = 1.0 / (1.0 + np.exp((voltage_tcr[no, i - 1] + 81.0) / 4.0))
-            h_inf_T_r = 1.0 / (1.0 + np.exp((voltage_trn[no, i - 1] + 80.0) / 5.0))
+            h_inf_T_t = 1.0 / (1.0 + np.exp((voltage_tcr[no] + 81.0) / 4.0))
+            h_inf_T_r = 1.0 / (1.0 + np.exp((voltage_trn[no] + 80.0) / 5.0))
             tau_h_T_t = (
-                30.8 + (211.4 + np.exp((voltage_tcr[no, i - 1] + 115.2) / 5.0)) / (1.0 + np.exp((voltage_tcr[no, i - 1] + 86.0) / 3.2))
+                30.8 + (211.4 + np.exp((voltage_tcr[no] + 115.2) / 5.0)) / (1.0 + np.exp((voltage_tcr[no] + 86.0) / 3.2))
             ) / 3.7371928
             tau_h_T_r = (
-                85.0 + 1.0 / (np.exp((voltage_trn[no, i - 1] + 48.0) / 4.0) + np.exp(-(voltage_trn[no, i - 1] + 407.0) / 50.0))
+                85.0 + 1.0 / (np.exp((voltage_trn[no] + 48.0) / 4.0) + np.exp(-(voltage_trn[no] + 407.0) / 50.0))
             ) / 3.7371928
             d_h_T_t = (h_inf_T_t - h_T_t[no]) / tau_h_T_t
             d_h_T_r = (h_inf_T_r - h_T_r[no]) / tau_h_T_r
-            m_inf_h = 1.0 / (1.0 + np.exp((voltage_tcr[no, i - 1] + 75.0 + shift_HA) / 5.5))
-            tau_m_h = 20.0 + 1000.0 / (np.exp((voltage_tcr[no, i - 1] + 71.5) / 14.2) + np.exp(-(voltage_tcr[no, i - 1] + 89.0) / 11.6))
+            m_inf_h = 1.0 / (1.0 + np.exp((voltage_tcr[no] + 75.0 + shift_HA) / 5.5))
+            tau_m_h = 20.0 + 1000.0 / (np.exp((voltage_tcr[no] + 71.5) / 14.2) + np.exp(-(voltage_tcr[no] + 89.0) / 11.6))
             # Calcium channel dynamics
             P_h = k1 * Ca[no]**n_P / (k1 * Ca[no]**n_P + k2)
             d_m_h1 = (m_inf_h * (1.0 - m_h2[no]) - m_h1[no]) / tau_m_h - k3 * P_h * m_h1[no] + k4 * m_h2[no]
@@ -955,18 +980,18 @@ def timeIntegration_njit_elementwise(
                 
             # d_ds_et = 0.0
             d_ds_et = gamma_e**2 * (cortical_rowsum - s_et[no]) - 2 * gamma_e * ds_et[no]  # 0 if rowsum == 0 since ds_et[no] == 0
-            # d_ds_er = gamma_e**2 * (N_rt * _firing_rate(voltage_tcr[no, i - 1]) - s_er[no]) - 2 * gamma_e * ds_er[no]
+            # d_ds_er = gamma_e**2 * (N_rt * _firing_rate(voltage_tcr[no]) - s_er[no]) - 2 * gamma_e * ds_er[no]
             d_ds_er = (
-                gamma_e**2 * (N_rt * _firing_rate(voltage_tcr[no, i - 1]) + cortical_rowsum - s_er[no]) - 2 * gamma_e * ds_er[no]
+                gamma_e**2 * (N_rt * _firing_rate(voltage_tcr[no]) + cortical_rowsum - s_er[no]) - 2 * gamma_e * ds_er[no]
             )
-            d_ds_gt = gamma_r**2 * (N_tr * _firing_rate(voltage_trn[no, i - 1]) - s_gt[no]) - 2 * gamma_r * ds_gt[no]
-            d_ds_gr = gamma_r**2 * (N_rr * _firing_rate(voltage_trn[no, i - 1]) - s_gr[no]) - 2 * gamma_r * ds_gr[no]
+            d_ds_gt = gamma_r**2 * (N_tr * _firing_rate(voltage_trn[no]) - s_gt[no]) - 2 * gamma_r * ds_gt[no]
+            d_ds_gr = gamma_r**2 * (N_rr * _firing_rate(voltage_trn[no]) - s_gr[no]) - 2 * gamma_r * ds_gr[no]
 
             ### Euler integration
-            voltage_tcr[no, i] = voltage_tcr[no, i - 1] + dt * d_voltage_tcr
-            voltage_trn[no, i] = voltage_trn[no, i - 1] + dt * d_voltage_trn
-            rates_tcr[no, i] = _firing_rate(voltage_tcr[no, i]) * 1e3  # convert kHz to Hz
-            rates_trn[no, i] = _firing_rate(voltage_trn[no, i]) * 1e3  # convert kHz to Hz
+            voltage_tcr[no] = voltage_tcr[no] + dt * d_voltage_tcr
+            voltage_trn[no] = voltage_trn[no] + dt * d_voltage_trn
+            rates_tcr[no, i] = _firing_rate(voltage_tcr[no]) * 1e3  # convert kHz to Hz
+            rates_trn[no, i] = _firing_rate(voltage_trn[no]) * 1e3  # convert kHz to Hz
             Ca[no] = Ca[no] + dt * d_Ca
             h_T_t[no] = h_T_t[no] + dt * d_h_T_t
             h_T_r[no] = h_T_r[no] + dt * d_h_T_r
@@ -982,12 +1007,27 @@ def timeIntegration_njit_elementwise(
             ds_er[no] = ds_er[no] + dt * d_ds_er
             ds_gr[no] = ds_gr[no] + dt * d_ds_gr
 
-            # Thalamus debug variables
-            if include_thal_rowsums:
-                thal_rowsums[no, i] = cortical_rowsum
-                I_T_t_array[no, i] = I_T_t
-                I_T_r_array[no, i] = I_T_r
-                I_h_array[no, i] = I_h
+            # Optional save to time series
+
+            if timeseries_to_save["voltage_tcr"]:
+                voltage_tcr_array[no, i] = voltage_tcr[no]
+
+            if timeseries_to_save["voltage_trn"]:
+                voltage_trn_array[no, i] = voltage_trn[no]
+
+            if timeseries_to_save["thal_rowsum"]:
+                thal_rowsum_array[no, i] = cortical_rowsum
+
+            if timeseries_to_save["I_T_t"]:
+                I_T_t_array[no, i] = I_T_t[no]
+
+            if timeseries_to_save["I_T_r"]:
+                I_T_r_array[no, i] = I_T_r[no]
+
+            if timeseries_to_save["I_h"]:
+                I_h_array[no, i] = I_h[no]
+
+            if timeseries_to_save["Ca"]:
                 Ca_array[no, i] = Ca[no]
 
     return (
