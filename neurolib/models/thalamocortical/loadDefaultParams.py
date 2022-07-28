@@ -33,7 +33,7 @@ def loadDefaultParams(Cmat=None, Dmat=None, lookupTableFileName=None, seed=None,
     params.dt = 0.01  # ms
     params.duration = 10000  # simulation duration (ms)
     np.random.seed(seed)  # seed for RNG of noise and ICs
-    params.seed = seed
+    params.seed = seed  # seed needs to be given to constructor `ThalamocorticalModel(seed=seed)` and not `.params["seed"]` for seed to affect ICs.
     params.cortical_noise = True  # TODO: for testing, remove when not needed.
 
     # options
