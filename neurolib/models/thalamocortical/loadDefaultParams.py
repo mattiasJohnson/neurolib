@@ -95,7 +95,7 @@ def loadDefaultParams(Cmat=None, Dmat=None, lookupTableFileName=None, seed=None,
     # connections between areas
     params.c_gl = 0.4
     # number of incoming E connections (to E population) from each area
-    params.Ke_gl = 265.0
+    params.Ke_gl = 250.0
 
     # ------------------------------------------------------------------------
     # ALN: local E-I node parameters
@@ -103,9 +103,9 @@ def loadDefaultParams(Cmat=None, Dmat=None, lookupTableFileName=None, seed=None,
 
     # external input parameters:
     params.tau_ou = 5.0  # ms timescale of ornstein-uhlenbeck (OU) noise
-    params.sigma_ou = 0.37  # mV/ms/sqrt(ms) intensity of OU oise
-    params.mue_ext_mean = 3.3  # mV/ms mean external input current to E
-    params.mui_ext_mean = 3.7  # mV/ms mean external input current to I
+    params.sigma_ou = 0.05  # mV/ms/sqrt(ms) intensity of OU oise
+    params.mue_ext_mean = 3.05  # mV/ms mean external input current to E
+    params.mui_ext_mean = 2.0  # mV/ms mean external input current to I
 
     # Ornstein-Uhlenbeck noise state variables, set to mean input
     # mue_ou will fluctuate around mue_ext_mean (mean of the OU process)
@@ -155,9 +155,9 @@ def loadDefaultParams(Cmat=None, Dmat=None, lookupTableFileName=None, seed=None,
 
     # neuron model parameters
     params.a = 0.0  # nS, can be 15.0
-    params.b = 3.2  # pA, can be 40.0
+    params.b = 15.0  # pA, can be 40.0
     params.EA = -80.0  # mV
-    params.tauA = 4765.0  # ms
+    params.tauA = 1000.0  # ms
 
     # single neuron paramters - if these are changed, new transfer functions must be precomputed!
     params.C = 200.0  # pF
