@@ -303,7 +303,7 @@ def timeIntegration(params):
     rates_trn = np.zeros((n_nodes_thal, startind + len(t)))
     # Set initial Thalamus fire rates
     # if initial values are just a Nx1 array
-    if np.shape(params["voltage_tcr_init"])[1] == 1:
+    if np.shape(params["rates_tcr_init"])[1] == 1:
         # repeat the 1-dim value startind times
         rates_tcr_init = params["rates_tcr_init"] * np.ones((n_nodes_thal, startind))
         rates_trn_init = params["rates_trn_init"] * np.ones((n_nodes_thal, startind))
@@ -335,7 +335,14 @@ def timeIntegration(params):
     # TODO: move this section inside of timeIntegration to not have to send all parameters, although only if not needing any more fancy init of arrays
 
     # Saving optional timeseries setup
-    timeseries_to_save = params["timeseries_to_save"]
+    save_IA = params["timeseries_to_save"]["IA"]
+    save_voltage_tcr = params["timeseries_to_save"]["voltage_tcr"]
+    save_voltage_trn = params["timeseries_to_save"]["voltage_trn"]
+    save_thal_rowsum = params["timeseries_to_save"]["thal_rowsum"]
+    save_I_T_t = params["timeseries_to_save"]["I_T_t"]
+    save_I_T_r = params["timeseries_to_save"]["I_T_r"]
+    save_I_h = params["timeseries_to_save"]["I_h"]
+    save_Ca = params["timeseries_to_save"]["Ca"]
 
     # Even if not saving anything numba needs the variables to still be arrays
     IA_array = np.zeros((1,1))
@@ -347,28 +354,28 @@ def timeIntegration(params):
     I_h_array = np.zeros((1,1))
     Ca_array = np.zeros((1,1))
 
-    if timeseries_to_save["IA"]:
-        IA_array = np.zeros((n_nodes_thal, startind + len(t)))
+    if save_IA:
+        IA_array = np.zeros((n_nodes_ctx, startind + len(t)))
 
-    if timeseries_to_save["voltage_tcr"]:
+    if save_voltage_tcr:
         voltage_tcr_array = np.zeros((n_nodes_thal, startind + len(t)))
 
-    if timeseries_to_save["voltage_trn"]:
+    if save_voltage_trn:
         voltage_trn_array = np.zeros((n_nodes_thal, startind + len(t)))
 
-    if timeseries_to_save["thal_rowsum"]:
+    if save_thal_rowsum:
         thal_rowsum_array = np.zeros((n_nodes_thal, startind + len(t)))
 
-    if timeseries_to_save["I_T_t"]:
+    if save_I_T_t:
         I_T_t_array = np.zeros((n_nodes_thal, startind + len(t)))
 
-    if timeseries_to_save["I_T_r"]:
+    if save_I_T_r:
         I_T_r_array = np.zeros((n_nodes_thal, startind + len(t)))
 
-    if timeseries_to_save["I_h"]:
+    if save_I_h:
         I_h_array = np.zeros((n_nodes_thal, startind + len(t)))
 
-    if timeseries_to_save["Ca"]:
+    if save_Ca:
         Ca_array = np.zeros((n_nodes_thal, startind + len(t)))
 
 
@@ -518,7 +525,14 @@ def timeIntegration(params):
         ds_gr,
         n_nodes_thal,
         cortical_noise,
-        timeseries_to_save,
+        save_IA,
+        save_voltage_tcr,
+        save_voltage_trn,
+        save_thal_rowsum,
+        save_I_T_t,
+        save_I_T_r,
+        save_I_h,
+        save_Ca,
         IA_array,
         voltage_tcr_array,
         voltage_trn_array,
@@ -675,7 +689,14 @@ def timeIntegration_njit_elementwise(
     ds_gr,
     n_nodes_thal,
     cortical_noise,
-    timeseries_to_save,
+    save_IA,
+    save_voltage_tcr,
+    save_voltage_trn,
+    save_thal_rowsum,
+    save_I_T_t,
+    save_I_T_r,
+    save_I_h,
+    save_Ca,
     IA_array,
     voltage_tcr_array,
     voltage_trn_array,
@@ -912,8 +933,8 @@ def timeIntegration_njit_elementwise(
             )  # mV/ms
 
             # optional saving of IA time series
-            if timeseries_to_save["IA"]:
-                IA_array[no, i] = IA
+            if save_IA:
+                IA_array[no, i] = IA[no]
 
         # -------------------------------------------------------------
         # Thalamus
@@ -1007,27 +1028,27 @@ def timeIntegration_njit_elementwise(
             ds_er[no] = ds_er[no] + dt * d_ds_er
             ds_gr[no] = ds_gr[no] + dt * d_ds_gr
 
-            # Optional save to time series
+            # Optional save to timeseries
 
-            if timeseries_to_save["voltage_tcr"]:
+            if save_voltage_tcr:
                 voltage_tcr_array[no, i] = voltage_tcr[no]
 
-            if timeseries_to_save["voltage_trn"]:
+            if save_voltage_trn:
                 voltage_trn_array[no, i] = voltage_trn[no]
 
-            if timeseries_to_save["thal_rowsum"]:
+            if save_thal_rowsum:
                 thal_rowsum_array[no, i] = cortical_rowsum
 
-            if timeseries_to_save["I_T_t"]:
-                I_T_t_array[no, i] = I_T_t[no]
+            if save_I_T_t:
+                I_T_t_array[no, i] = I_T_t
 
-            if timeseries_to_save["I_T_r"]:
-                I_T_r_array[no, i] = I_T_r[no]
+            if save_I_T_r:
+                I_T_r_array[no, i] = I_T_r
 
-            if timeseries_to_save["I_h"]:
-                I_h_array[no, i] = I_h[no]
+            if save_I_h:
+                I_h_array[no, i] = I_h
 
-            if timeseries_to_save["Ca"]:
+            if save_Ca:
                 Ca_array[no, i] = Ca[no]
 
     return (
@@ -1066,8 +1087,11 @@ def timeIntegration_njit_elementwise(
         ds_gt,
         ds_er,
         ds_gr,
-        # thalamus debug
-        thal_rowsums,
+        # optional timeseries to save
+        IA_array,
+        voltage_tcr_array,
+        voltage_trn_array,
+        thal_rowsum_array,
         I_T_t_array,
         I_T_r_array,
         I_h_array,

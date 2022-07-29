@@ -49,9 +49,9 @@ def loadDefaultParams(Cmat=None, Dmat=None, lookupTableFileName=None, seed=None,
             "voltage_tcr": False,
             "voltage_trn": False,
             "thal_rowsum": False,
-            "I_T_a": False,
-            "I_T_a": False,
-            "I_a": False,
+            "I_T_t": False,
+            "I_T_r": False,
+            "I_h": False,
             "Ca": False,
     }
 
