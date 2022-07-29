@@ -63,7 +63,7 @@ def timeIntegration(params):
 
     # Connectivity matric
     # Interareal relative coupling strengths (values between 0 and 1), Cmat(i,j) connnection from jth to ith
-    params["_Cmat_scaled"] = scaleCmat(
+    params["Cmat_scaled"] = scaleCmat(
         params["Cmat"],
         params["scale_ctx_to_ctx"],
         params["scale_ctx_to_thal"],
@@ -72,7 +72,7 @@ def timeIntegration(params):
         params["n_nodes_ctx"],
         params["n_nodes_thal"]
     )
-    Cmat = params["_Cmat_scaled"]
+    Cmat = params["Cmat_scaled"]
     c_gl = params["c_gl"]  # EPSP amplitude between areas
     Ke_gl = params["Ke_gl"]  # number of incoming E connections (to E population) from each area
 
