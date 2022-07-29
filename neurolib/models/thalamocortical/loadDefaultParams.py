@@ -142,10 +142,10 @@ def loadDefaultParams(Cmat=None, Dmat=None, lookupTableFileName=None, seed=None,
 
     #TODO: these should probably be 0.3 0.5 like aln model
     # PSC amplitudes
-    params.cee = 0.24691358  # mV/ms
-    params.cie = 0.23076923  # AMPA
-    params.cei = 0.75757576  # GABA BrunelWang2003
-    params.cii = 1.52439024
+    params.cee = 0.3  # mV/ms
+    params.cie = 0.3  # AMPA
+    params.cei = 0.5  # GABA BrunelWang2003
+    params.cii = 0.5
 
     # Coupling strengths used in Cakan2020
     params.Jee_max = 2.43  # mV/ms
