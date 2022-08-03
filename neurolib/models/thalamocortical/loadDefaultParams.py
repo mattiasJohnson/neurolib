@@ -187,7 +187,9 @@ def loadDefaultParams(Cmat=None, Dmat=None, lookupTableFileName=None, seed=None,
         params.siev_init,
         params.rates_exc_init,
         params.rates_inh_init,
-        # Thalamus initial conditions:
+    ) = generateRandomICsALN(params.n_nodes_ctx, seed)
+
+    (
         params.voltage_tcr_init,
         params.voltage_trn_init,
         params.rates_tcr_init,
@@ -205,7 +207,7 @@ def loadDefaultParams(Cmat=None, Dmat=None, lookupTableFileName=None, seed=None,
         params.ds_gt_init,
         params.ds_er_init,
         params.ds_gr_init,
-    ) = generateRandomICs(params.n_nodes_ctx, params.n_nodes_thal, seed)
+    ) = generateRandomICsThalamus(params.n_nodes_thal, seed)
 
     # load precomputed aLN transfer functions from hdfs
     if lookupTableFileName is None:
@@ -302,24 +304,19 @@ def computeDelayMatrix(lengthMat, signalV, segmentLength=1):
     return Dmat
 
 
-# TODO: split this up in two for more clarity? + will sneakily fix setting seed twice without looking odd.
-def generateRandomICs(n_nodes_ctx, n_nodes_thal, seed=None):
+def generateRandomICsALN(n_nodes_ctx, seed=None):
     """
-    Generates random Initial Conditions for the interareal network
+    Generates random initial conditions for the aln part of the interareal network
 
-    :params n_nodes_ctx: Number of cortical nodes.
-    :params n_nodes_thal: Number of thalamic nodes.
+    :params n_nodes_ctx: number of cortical nodes.
 
-
-    :returns:   A tuple of length 24 representing initial state of the model.
-                First 9 elements are `n_nodes_ctx` long numpy arrays representing:
+    :returns:   A tuple of length 9 representing initial state of the aln part of the model.
+                All the elements are `n_nodes_ctx` long numpy arrays representing:
                 mufe_init, IA_init, mufi_init, sem_init, sev_init,
                 sim_init, siv_init, rates_exc_init, rates_inh_init
-                Following 15 elements are `n_nodes_thal` long numpy arrays representing initial state of thalamus.
     """
     np.random.seed(seed)
 
-    # Cortex
     # TODO: Why are all not same shape? Why rates_exc_init two dimensional but most other ones one-dimensional?
     mufe_init = 3 * np.random.uniform(0, 1, (n_nodes_ctx,))  # mV/ms
     mufi_init = 3 * np.random.uniform(0, 1, (n_nodes_ctx,))  # mV/ms
@@ -335,9 +332,35 @@ def generateRandomICs(n_nodes_ctx, n_nodes_thal, seed=None):
     rates_inh_init = 0.01 * np.random.uniform(0, 1, (n_nodes_ctx, 1))
     IA_init = 200.0 * np.random.uniform(0, 1, (n_nodes_ctx,))  # pA
 
+    return (
+        mufe_init,
+        mufi_init,
+        IA_init,
+        seem_init,
+        seim_init,
+        seev_init,
+        seiv_init,
+        siim_init,
+        siem_init,
+        siiv_init,
+        siev_init,
+        rates_exc_init,
+        rates_inh_init,
+    )
+
+
+def generateRandomICsThalamus(n_nodes_thal, seed=None):
+    """
+    Generates random initial conditions for the thalamus part of the interareal network
+
+    :params n_nodes_thal: number of thalamic nodes.
+    
+    :returns: A tuple of length 15 representing initial state of the aln part of the model.
+              All the elements are `n_nodes_thal` long numpy arrays representing:
+    """
+
     np.random.seed(seed)  # TODO: For debug, remove when not needed. Ensures sanity check of identical output from thalamocortical to native aln and thalamus given same seed.
 
-    # Thalamus
     voltage_tcr_init = np.random.uniform(-75, -50, (n_nodes_thal,))
     voltage_trn_init = np.random.uniform(-75, -50, (n_nodes_thal,))
     rates_tcr_init = np.random.uniform(0.0, 200.0, (n_nodes_thal, 1))
@@ -355,23 +378,8 @@ def generateRandomICs(n_nodes_ctx, n_nodes_thal, seed=None):
     ds_gt_init = np.zeros((n_nodes_thal,))
     ds_er_init = np.zeros((n_nodes_thal,))
     ds_gr_init = np.zeros((n_nodes_thal,))
-
+    
     return (
-        # aln
-        mufe_init,
-        mufi_init,
-        IA_init,
-        seem_init,
-        seim_init,
-        seev_init,
-        seiv_init,
-        siim_init,
-        siem_init,
-        siiv_init,
-        siev_init,
-        rates_exc_init,
-        rates_inh_init,
-        # Thalamus
         voltage_tcr_init,
         voltage_trn_init,
         rates_tcr_init,
