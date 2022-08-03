@@ -356,7 +356,8 @@ def generateRandomICsThalamus(n_nodes_thal, seed=None):
     :params n_nodes_thal: number of thalamic nodes.
     
     :returns: A tuple of length 15 representing initial state of the aln part of the model.
-              All the elements are `n_nodes_thal` long numpy arrays representing:
+              All the elements are `n_nodes_thal` long numpy arrays.
+              All the elements are vectors except for rates_tcr_init/rates_trn_init which are matrices.
     """
 
     np.random.seed(seed)  # TODO: For debug, remove when not needed. Ensures sanity check of identical output from thalamocortical to native aln and thalamus given same seed.
