@@ -105,6 +105,7 @@ class ThalamocorticalModel(Model):
         params=None,
         Cmat=None,
         Dmat=None,
+        lengthMat=None,
         lookupTableFileName=None,
         seed=None,
         n_nodes_ctx=None,
@@ -113,7 +114,8 @@ class ThalamocorticalModel(Model):
         """
         :param params: parameter dictionary of the model
         :param Cmat: Global connectivity matrix between the exc. aln and exc. thalamic nodes. Assumes first `n_nodes_ctx` indices are cortical
-        :param Dmat: Distance matrix between all nodes (in mm)
+        :param Dmat: Delay matrix between all nodes (in ms)
+        :param lengthMat: Distance matrix between all nodes (in mm), if given will be used to calculate Dmat
         :param lookupTableFileName: Filename for precomputed transfer functions and tables
         :param seed: Random number generator seed
         :param simulateChunkwise: Chunkwise time integration (for lower memory use)
@@ -132,6 +134,7 @@ class ThalamocorticalModel(Model):
             params = dp.loadDefaultParams(
                 Cmat=self.Cmat,
                 Dmat=self.Dmat,
+                lengthMat=lengthMat,
                 lookupTableFileName=self.lookupTableFileName,
                 seed=self.seed,
                 n_nodes_ctx=n_nodes_ctx,
