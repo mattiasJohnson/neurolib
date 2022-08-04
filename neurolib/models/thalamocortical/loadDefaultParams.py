@@ -5,13 +5,15 @@ import h5py
 from ...utils.collections import star_dotdict
 
 
-def loadDefaultParams(Cmat=None, Dmat=None, lookupTableFileName=None, seed=None, n_nodes_ctx=None, n_nodes_thal=None):
+def loadDefaultParams(Cmat=None, Dmat=None, lengthMat=None, lookupTableFileName=None, seed=None, n_nodes_ctx=None, n_nodes_thal=None):
     """
     Load default parameters for a network of connected ALN and thalamic nodes.
 
     :param Cmat: Structural connectivity matrix (adjacency matrix) of coupling strengths. Assumes first `n_nodes_ctx` indices are cortical and following `n_nodes_thal` indices thalamic. If not given, then a model with a single aln and thalamic node will be assumed, defaults to None
     :type Cmat: numpy.ndarray, optional
-    :param Dmat: Fiber length matrix, will be used for computing the delay matrix together with the signal transmission speed parameter `signalV`, defaults to None
+    :param Dmat: Delay matrix, defaults to None
+    :type Dmat: numpy.ndarray, optional
+    :param lengthMat: Fiber length matrix, if given then this matrix together with the signal transmission speed parameter `signalV` will be used for computing (and overwrite) the delay matrix Dmat, defaults to None
     :type Dmat: numpy.ndarray, optional
     :param lookUpTableFileName: Filename of lookup table with aln non-linear transfer functions and other precomputed quantities., defaults to aln-precalc/quantities_cascade.h
     :type lookUpTableFileName: str, optional
@@ -61,14 +63,16 @@ def loadDefaultParams(Cmat=None, Dmat=None, lookupTableFileName=None, seed=None,
 
     if Cmat is None:
         params.Cmat = np.array([[0, 0.12], [1.2, 0]])
-        lengthMat = np.zeros((2, 2))
-        lengthMat[0, 1] = 13 * 20  # corresponds to 13 ms delay
-        lengthMat[1, 0] = 13 * 20  # corresponds to 13 ms delay
-        params.lengthMat = lengthMat
+        Dmat = np.zeros((2, 2))
+        Dmat[0, 1] = 13  # 13 ms delay, thal -> ctx
+        Dmat[1, 0] = 13  # 13 ms delay, ctx -> thal
+        params.Dmat = Dmat
     else:
         params.Cmat = Cmat.copy()  # coupling matrix
         np.fill_diagonal(params.Cmat, 0)  # no self connections
-        params.lengthMat = Dmat  # delay matrix
+        params.Dmat = Dmat  # delay matrix
+        
+    params.lengthMat = lengthMat
 
     # Number of cortical and thalamic nodes
     if n_nodes_ctx is None:
