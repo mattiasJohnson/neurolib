@@ -90,8 +90,8 @@ def timeIntegration(params):
         params["Dmat"] = dp.computeDelayMatrix(
             lengthMat, signalV
         )  # Interareal connection delays, Dmat(i,j) Connnection from jth node to ith (ms)
-        np.fill_diagonal(params["Dmat"][:n_nodes_ctx, :n_nodes_ctx], params["de"])  # Cortex self-delays == de
 
+    np.fill_diagonal(params["Dmat"][:n_nodes_ctx, :n_nodes_ctx], params["de"])  # Cortex self-delays == de
     Dmat = params["Dmat"]
     Dmat_ndt = np.around(Dmat / dt).astype(int)  # delay matrix in multiples of dt
 
