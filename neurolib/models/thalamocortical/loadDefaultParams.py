@@ -108,7 +108,7 @@ def loadDefaultParams(Cmat=None, Dmat=None, lengthMat=None, lookupTableFileName=
     # external input parameters:
     params.tau_ou = 5.0  # ms timescale of ornstein-uhlenbeck (OU) noise
     params.sigma_ou = 0.05  # mV/ms/sqrt(ms) intensity of OU oise
-    params.mue_ext_mean = 3.05  # mV/ms mean external input current to E
+    params.mue_ext_mean = 3.3  # mV/ms mean external input current to E (used to be 3.05 before S3)
     params.mui_ext_mean = 2.0  # mV/ms mean external input current to I
 
     # Ornstein-Uhlenbeck noise state variables, set to mean input
