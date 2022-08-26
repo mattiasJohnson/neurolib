@@ -46,16 +46,14 @@ def loadDefaultParams(Cmat=None, Dmat=None, lengthMat=None, lookupTableFileName=
     params.fast_interp = 1  # if 1, Interpolate the value from the look-up table instead of taking the closest value
 
     # optional timeseries to save (each defaults to False to save ram)
-    params.timeseries_to_save = {
-            "IA": False,
-            "voltage_tcr": False,
-            "voltage_trn": False,
-            "thal_rowsum": False,
-            "I_T_t": False,
-            "I_T_r": False,
-            "I_h": False,
-            "Ca": False,
-    }
+    params.save_IA = False
+    params.save_voltage_tcr = False
+    params.save_voltage_trn = False
+    params.save_thal_rowsum = False
+    params.save_I_T_t = False
+    params.save_I_T_r = False
+    params.save_I_h = False
+    params.save_Ca = False
 
     # ------------------------------------------------------------------------
     # global whole-brain network parameters

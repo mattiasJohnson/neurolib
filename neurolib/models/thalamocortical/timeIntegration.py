@@ -338,14 +338,14 @@ def timeIntegration(params):
     # TODO: move this section inside of timeIntegration to not have to send all parameters, although only if not needing any more fancy init of arrays
 
     # Saving optional timeseries setup
-    save_IA = params["timeseries_to_save"]["IA"]
-    save_voltage_tcr = params["timeseries_to_save"]["voltage_tcr"]
-    save_voltage_trn = params["timeseries_to_save"]["voltage_trn"]
-    save_thal_rowsum = params["timeseries_to_save"]["thal_rowsum"]
-    save_I_T_t = params["timeseries_to_save"]["I_T_t"]
-    save_I_T_r = params["timeseries_to_save"]["I_T_r"]
-    save_I_h = params["timeseries_to_save"]["I_h"]
-    save_Ca = params["timeseries_to_save"]["Ca"]
+    save_IA = params["save_IA"]
+    save_voltage_tcr = params["save_voltage_tcr"]
+    save_voltage_trn = params["save_voltage_trn"]
+    save_thal_rowsum = params["save_thal_rowsum"]
+    save_I_T_t = params["save_I_T_t"]
+    save_I_T_r = params["save_I_T_r"]
+    save_I_h = params["save_I_h"]
+    save_Ca = params["save_Ca"]
 
     # Even if not saving anything numba needs the variables to still be arrays
     IA_array = np.zeros((1,1))
@@ -359,25 +359,18 @@ def timeIntegration(params):
 
     if save_IA:
         IA_array = np.zeros((n_nodes_ctx, startind + len(t)))
-
     if save_voltage_tcr:
         voltage_tcr_array = np.zeros((n_nodes_thal, startind + len(t)))
-
     if save_voltage_trn:
         voltage_trn_array = np.zeros((n_nodes_thal, startind + len(t)))
-
     if save_thal_rowsum:
         thal_rowsum_array = np.zeros((n_nodes_thal, startind + len(t)))
-
     if save_I_T_t:
         I_T_t_array = np.zeros((n_nodes_thal, startind + len(t)))
-
     if save_I_T_r:
         I_T_r_array = np.zeros((n_nodes_thal, startind + len(t)))
-
     if save_I_h:
         I_h_array = np.zeros((n_nodes_thal, startind + len(t)))
-
     if save_Ca:
         Ca_array = np.zeros((n_nodes_thal, startind + len(t)))
 
@@ -784,6 +777,7 @@ def timeIntegration_njit_elementwise(
             noise_exc[no] = rates_exc[no, i]
             noise_inh[no] = rates_inh[no, i]
 
+            # TODO: remove if clause when no more testing needed
             if cortical_noise:
                 mue = Jee_max * seem[no] + Jei_max * seim[no] + mue_ou[no] + ext_exc_current[no, i]
                 mui = Jie_max * siem[no] + Jii_max * siim[no] + mui_ou[no] + ext_inh_current[no, i]
@@ -935,7 +929,7 @@ def timeIntegration_njit_elementwise(
                 mui_ou[no] + (mui_ext_mean - mui_ou[no]) * dt / tau_ou + sigma_ou * sqrt_dt * noise_inh[no]
             )  # mV/ms
 
-            # optional saving of IA time series
+            # TODO: remove saving of IA time series when no more testing needed
             if save_IA:
                 IA_array[no, i] = IA[no]
 
@@ -1031,26 +1025,19 @@ def timeIntegration_njit_elementwise(
             ds_er[no] = ds_er[no] + dt * d_ds_er
             ds_gr[no] = ds_gr[no] + dt * d_ds_gr
 
-            # Optional save to timeseries
-
+            # TODO: remove optional save to timeseries when no more testing needed
             if save_voltage_tcr:
                 voltage_tcr_array[no, i] = voltage_tcr[no]
-
             if save_voltage_trn:
                 voltage_trn_array[no, i] = voltage_trn[no]
-
             if save_thal_rowsum:
                 thal_rowsum_array[no, i] = cortical_rowsum
-
             if save_I_T_t:
                 I_T_t_array[no, i] = I_T_t
-
             if save_I_T_r:
                 I_T_r_array[no, i] = I_T_r
-
             if save_I_h:
                 I_h_array[no, i] = I_h
-
             if save_Ca:
                 Ca_array[no, i] = Ca[no]
 
