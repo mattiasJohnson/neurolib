@@ -334,46 +334,6 @@ def timeIntegration(params):
     ds_er = params["ds_er_init"].copy()
     ds_gr = params["ds_gr_init"].copy()
 
-    
-    # TODO: move this section inside of timeIntegration to not have to send all parameters, although only if not needing any more fancy init of arrays
-
-    # Saving optional timeseries setup
-    save_IA = params["save_IA"]
-    save_voltage_tcr = params["save_voltage_tcr"]
-    save_voltage_trn = params["save_voltage_trn"]
-    save_thal_rowsum = params["save_thal_rowsum"]
-    save_I_T_t = params["save_I_T_t"]
-    save_I_T_r = params["save_I_T_r"]
-    save_I_h = params["save_I_h"]
-    save_Ca = params["save_Ca"]
-
-    # Even if not saving anything numba needs the variables to still be arrays
-    IA_array = np.zeros((1,1))
-    voltage_tcr_array = np.zeros((1,1))
-    voltage_trn_array = np.zeros((1,1))
-    thal_rowsum_array = np.zeros((1,1))
-    I_T_t_array = np.zeros((1,1))
-    I_T_r_array = np.zeros((1,1))
-    I_h_array = np.zeros((1,1))
-    Ca_array = np.zeros((1,1))
-
-    if save_IA:
-        IA_array = np.zeros((n_nodes_ctx, startind + len(t)))
-    if save_voltage_tcr:
-        voltage_tcr_array = np.zeros((n_nodes_thal, startind + len(t)))
-    if save_voltage_trn:
-        voltage_trn_array = np.zeros((n_nodes_thal, startind + len(t)))
-    if save_thal_rowsum:
-        thal_rowsum_array = np.zeros((n_nodes_thal, startind + len(t)))
-    if save_I_T_t:
-        I_T_t_array = np.zeros((n_nodes_thal, startind + len(t)))
-    if save_I_T_r:
-        I_T_r_array = np.zeros((n_nodes_thal, startind + len(t)))
-    if save_I_h:
-        I_h_array = np.zeros((n_nodes_thal, startind + len(t)))
-    if save_Ca:
-        Ca_array = np.zeros((n_nodes_thal, startind + len(t)))
-
 
     noise_thalamus = np.random.standard_normal(len(t))
 
@@ -521,22 +481,6 @@ def timeIntegration(params):
         ds_gr,
         n_nodes_thal,
         cortical_noise,
-        save_IA,
-        save_voltage_tcr,
-        save_voltage_trn,
-        save_thal_rowsum,
-        save_I_T_t,
-        save_I_T_r,
-        save_I_h,
-        save_Ca,
-        IA_array,
-        voltage_tcr_array,
-        voltage_trn_array,
-        thal_rowsum_array,
-        I_T_t_array,
-        I_T_r_array,
-        I_h_array,
-        Ca_array,
     )
 
 
@@ -685,22 +629,6 @@ def timeIntegration_njit_elementwise(
     ds_gr,
     n_nodes_thal,
     cortical_noise,
-    save_IA,
-    save_voltage_tcr,
-    save_voltage_trn,
-    save_thal_rowsum,
-    save_I_T_t,
-    save_I_T_r,
-    save_I_h,
-    save_Ca,
-    IA_array,
-    voltage_tcr_array,
-    voltage_trn_array,
-    thal_rowsum_array,
-    I_T_t_array,
-    I_T_r_array,
-    I_h_array,
-    Ca_array,
 ):
 
     # Global
@@ -929,9 +857,6 @@ def timeIntegration_njit_elementwise(
                 mui_ou[no] + (mui_ext_mean - mui_ou[no]) * dt / tau_ou + sigma_ou * sqrt_dt * noise_inh[no]
             )  # mV/ms
 
-            # TODO: remove saving of IA time series when no more testing needed
-            if save_IA:
-                IA_array[no, i] = IA[no]
 
         # -------------------------------------------------------------
         # Thalamus
@@ -1025,22 +950,6 @@ def timeIntegration_njit_elementwise(
             ds_er[no] = ds_er[no] + dt * d_ds_er
             ds_gr[no] = ds_gr[no] + dt * d_ds_gr
 
-            # TODO: remove optional save to timeseries when no more testing needed
-            if save_voltage_tcr:
-                voltage_tcr_array[no, i] = voltage_tcr[no]
-            if save_voltage_trn:
-                voltage_trn_array[no, i] = voltage_trn[no]
-            if save_thal_rowsum:
-                thal_rowsum_array[no, i] = cortical_rowsum
-            if save_I_T_t:
-                I_T_t_array[no, i] = I_T_t
-            if save_I_T_r:
-                I_T_r_array[no, i] = I_T_r
-            if save_I_h:
-                I_h_array[no, i] = I_h
-            if save_Ca:
-                Ca_array[no, i] = Ca[no]
-
     return (
         t,
         # aln
@@ -1077,15 +986,6 @@ def timeIntegration_njit_elementwise(
         ds_gt,
         ds_er,
         ds_gr,
-        # optional timeseries to save
-        IA_array,
-        voltage_tcr_array,
-        voltage_trn_array,
-        thal_rowsum_array,
-        I_T_t_array,
-        I_T_r_array,
-        I_h_array,
-        Ca_array,
     )
 
 

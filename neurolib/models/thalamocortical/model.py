@@ -85,17 +85,8 @@ class ThalamocorticalModel(Model):
         "ds_gt",
         "ds_er",
         "ds_gr",
-        # For debug
-        "IA_array",
-        "voltage_tcr_array",
-        "voltage_trn_array",
-        "thal_rowsum_array",
-        "I_T_t_array",
-        "I_T_r_array",
-        "I_h_array",
-        "Ca_array",
     ]
-    output_vars = ["rates_exc", "rates_inh"] + ["rates_tcr", "rates_trn"] + ["IA_array", "voltage_tcr_array", "voltage_trn_array", "thal_rowsum_array", "I_T_t_array", "I_T_r_array", "I_h_array", "Ca_array"]
+    output_vars = ["rates_exc", "rates_inh"] + ["rates_tcr", "rates_trn"]  # TODO: voltage_tcr, voltage_trn
     default_output = "rates_exc"
     input_vars = ["ext_exc_current", "ext_exc_rate"]
     default_input = "ext_exc_rate"
